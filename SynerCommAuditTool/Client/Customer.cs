@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.ActiveDirectory;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -36,7 +38,7 @@ namespace SynerCommAuditTool.Client
     }
 
 
-    internal class Customer
+    public class Customer
     {
         public string Name { get; private set; }
         public string PullDate { get; private set; }
@@ -94,6 +96,19 @@ namespace SynerCommAuditTool.Client
             return LdapString;
         }
 
+        private String ParseDateTime(long propCol)
+        {
+            if (propCol == 0)
+            {
+                return "0";
+            }
+
+            Console.WriteLine($"propcol: {propCol}");
+            DateTime dt = DateTime.FromFileTime(propCol);
+
+            return $"{dt.Month}/{dt.Day}/{dt.ToString("yyyy")}";
+        }
+
         public void EnumerateUsers(String domain, bool verbose)
         {
             String LdapString = GetLdapString(domain);
@@ -114,29 +129,32 @@ namespace SynerCommAuditTool.Client
             this.Users = new User[results.Count];
 
             int count = 0;
-            Console.WriteLine($"Result Property Col: {results[0].Properties}");
             foreach (SearchResult result in results)
             {
                 ResultPropertyCollection resultPropColl = result.Properties;
+
+                Console.WriteLine($"pwdlastset: {(long)resultPropColl["pwdlastset"][0]}");
+                Console.WriteLine($"lastlogon: {(long)resultPropColl["lastlogon"][0]}");
+
                 String cn = resultPropColl["cn"].Count > 0 ? resultPropColl["cn"][0].ToString() : "";
                 String name = resultPropColl["name"].Count > 0 ? resultPropColl["name"][0].ToString() : "";
                 String samAccountName = resultPropColl["samAccountName"].Count > 0 ? resultPropColl["samAccountName"][0].ToString() : "";
                 String memberOf = resultPropColl["memberof"].Count > 0 ? resultPropColl["memberof"][0].ToString() : "";
                 String displayName = resultPropColl["displayname"].Count > 0 ? resultPropColl["displayname"][0].ToString() : "";
                 String primaryGroupId = resultPropColl["primarygroupid"].Count > 0 ? resultPropColl["primarygroupid"][0].ToString() : "";
-                String objectSid = resultPropColl["objectsid"].Count > 0 ? resultPropColl["objectsid"][0].ToString() : "";
                 String description = resultPropColl["description"].Count > 0 ? resultPropColl["description"][0].ToString() : "";
-                String pwdLastSet = "";
-                String whenCreated = "";
-                String whenChanged = "";
-                String lastLogon = "";
-                if (resultPropColl["pwdlastset"].Count > 0 || resultPropColl["whenCreated"].Count > 0 || resultPropColl["whenChanged"].Count > 0 || resultPropColl["lastLogon"].Count > 0)
+                String objectSid = "";
+                String pwdLastSet = resultPropColl["pwdlastset"].Count > 0 ? this.ParseDateTime((long)resultPropColl["pwdlastset"][0]) : "";
+                String whenCreated = resultPropColl["whencreated"].Count > 0 ? resultPropColl["whencreated"][0].ToString() : "";
+                String whenChanged = resultPropColl["whenchanged"].Count > 0 ? resultPropColl["whenchanged"][0].ToString() : "";
+                String lastLogon = resultPropColl["lastlogon"].Count > 0 ? this.ParseDateTime((long)resultPropColl["lastlogon"][0]) : "";
+
+                if (resultPropColl["objectsid"].Count > 0)
                 {
-
-                    DateTime dt = DateTime.FromFileTime((long)resultPropColl["pwdlastset"][0]);
-
-                    pwdLastSet = $"{dt.Month}/{dt.Day}/{dt.ToString("yyyy")}";
+                    SecurityIdentifier sid = new SecurityIdentifier((byte[])resultPropColl["objectSid"][0], 0);
+                    objectSid = sid.ToString();
                 }
+
                 String userAccountControl = resultPropColl["useraccountcontrol"].Count > 0 ? resultPropColl["useraccountcontrol"][0].ToString() : "";
                 String uacFlags = "";
                 if (!string.IsNullOrEmpty(userAccountControl))
@@ -149,9 +167,9 @@ namespace SynerCommAuditTool.Client
                     Console.WriteLine($"{cn}, {name},{samAccountName},{memberOf}, {displayName},{primaryGroupId},{whenCreated},{whenChanged}, {lastLogon}, {uacFlags}, {pwdLastSet}, {objectSid}, {description}");
                 }
 
-// CustomerUserData customerUserData = new CustomerUserData(samAccountName, displayName, userPrincipalName, mail, pwdLastSet, uacFlags);
+                User user = new User(cn, name, samAccountName, memberOf, displayName, primaryGroupId, whenCreated, whenChanged, lastLogon, userAccountControl, pwdLastSet, objectSid, description);
 
-//                this.UserData[count] = customerUserData;
+                this.Users[count] = user;
 
                 count++;
             }
