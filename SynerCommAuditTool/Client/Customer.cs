@@ -53,12 +53,13 @@ namespace SynerCommAuditTool.Client
         public User[] Users { get; private set; }
 
 
-        public Customer()
+        public Customer(string name)
         {
+            this.Name = name;
             this.PullDate = DateTime.Now.ToString("MM/dd/yyyy");
         }
 
-        private string ParseUacFlags(String uacVal)
+        private string[] ParseUacFlags(String uacVal)
         {
             List<String> flags = new List<String>();
             foreach (uint i in Enum.GetValues(typeof(UacFlags)))
@@ -71,7 +72,7 @@ namespace SynerCommAuditTool.Client
                 }
             }
 
-            return String.Join(",", flags.ToArray());
+            return flags.ToArray();
         }
 
         private static String GetLdapString(String domain)
@@ -103,7 +104,6 @@ namespace SynerCommAuditTool.Client
                 return "0";
             }
 
-            Console.WriteLine($"propcol: {propCol}");
             DateTime dt = DateTime.FromFileTime(propCol);
 
             return $"{dt.Month}/{dt.Day}/{dt.ToString("yyyy")}";
@@ -133,9 +133,6 @@ namespace SynerCommAuditTool.Client
             {
                 ResultPropertyCollection resultPropColl = result.Properties;
 
-                Console.WriteLine($"pwdlastset: {(long)resultPropColl["pwdlastset"][0]}");
-                Console.WriteLine($"lastlogon: {(long)resultPropColl["lastlogon"][0]}");
-
                 String cn = resultPropColl["cn"].Count > 0 ? resultPropColl["cn"][0].ToString() : "";
                 String name = resultPropColl["name"].Count > 0 ? resultPropColl["name"][0].ToString() : "";
                 String samAccountName = resultPropColl["samAccountName"].Count > 0 ? resultPropColl["samAccountName"][0].ToString() : "";
@@ -156,7 +153,8 @@ namespace SynerCommAuditTool.Client
                 }
 
                 String userAccountControl = resultPropColl["useraccountcontrol"].Count > 0 ? resultPropColl["useraccountcontrol"][0].ToString() : "";
-                String uacFlags = "";
+                String[] uacFlags = Array.Empty<string>();
+
                 if (!string.IsNullOrEmpty(userAccountControl))
                 {
                     uacFlags = this.ParseUacFlags(userAccountControl);
@@ -164,10 +162,10 @@ namespace SynerCommAuditTool.Client
 
                 if (verbose)
                 {
-                    Console.WriteLine($"{cn}, {name},{samAccountName},{memberOf}, {displayName},{primaryGroupId},{whenCreated},{whenChanged}, {lastLogon}, {uacFlags}, {pwdLastSet}, {objectSid}, {description}");
+                    Console.WriteLine($"{cn}, {name}, {samAccountName}, {memberOf}, {displayName}, {primaryGroupId}, {whenCreated}, {whenChanged}, {lastLogon}, [{String.Join(",", uacFlags)}], {pwdLastSet}, {objectSid}, {description}");
                 }
 
-                User user = new User(cn, name, samAccountName, memberOf, displayName, primaryGroupId, whenCreated, whenChanged, lastLogon, userAccountControl, pwdLastSet, objectSid, description);
+                User user = new User(cn, name, samAccountName, memberOf, displayName, primaryGroupId, whenCreated, whenChanged, lastLogon, uacFlags, pwdLastSet, objectSid, description);
 
                 this.Users[count] = user;
 
@@ -200,13 +198,9 @@ namespace SynerCommAuditTool.Client
             DirectoryEntry directoryEntry = new DirectoryEntry(ldapConnectionString);
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=domainDNS)");
 
-            directorySearcher.PropertiesToLoad.Add("maxPwdAge");
-            directorySearcher.PropertiesToLoad.Add("minPwdAge");
-            directorySearcher.PropertiesToLoad.Add("minPwdLength");
-            directorySearcher.PropertiesToLoad.Add("pwdProperties");
-            directorySearcher.PropertiesToLoad.Add("lockoutDuration");
-            directorySearcher.PropertiesToLoad.Add("lockoutObservationWindow");
-            directorySearcher.PropertiesToLoad.Add("lockoutThreshold");
+            String[] passwordProps = {"maxPwdAge", "minPwdAge", "minPwdLength", "pwdProperties", "lockoutDuration", "lockoutObservationWindow", "lockoutThreshold"};
+
+            directorySearcher.PropertiesToLoad.AddRange(passwordProps);
 
             Console.WriteLine("[+] Querying password policy");
 
@@ -233,7 +227,6 @@ namespace SynerCommAuditTool.Client
                 Console.WriteLine($"--- Lockout Threshold: {result.Properties["lockoutThreshold"][0]} invalid attempts ----");
             }
 
-            List<String> passPol = new List<string>();
             this.MinPwdAge = Math.Abs(minPwdAge.TotalDays);
             this.MaxPwdAge = Math.Abs(maxPwdAge.TotalDays);
             this.MinPasswordLength = (int)result.Properties["minPwdLength"][0];

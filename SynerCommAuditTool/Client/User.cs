@@ -18,12 +18,12 @@ namespace SynerCommAuditTool.Client
         public string WhenCreated { get; private set; }
         public string WhenChanged { get; private set; }
         public string LastLogon { get; private set; }
-        public string UserAccountControl { get; private set; }
+        public string[] UserAccountControl { get; private set; }
         public string PwdLastSet { get; private set; }
         public string objectSid { get; private set; }
         public string Description { get; private set; }
 
-        public User(string cn, string name, string samAccountName, string memberOf, string displayName, string primaryGroupId, string whenCreated, string whenChanged, string lastLogon, string userAccountControl, string pwdLastSet, string objectSid, string description)
+        public User(string cn, string name, string samAccountName, string memberOf, string displayName, string primaryGroupId, string whenCreated, string whenChanged, string lastLogon, string[] userAccountControl, string pwdLastSet, string objectSid, string description)
         {
             this.Cn = cn;
             this.Name = name;

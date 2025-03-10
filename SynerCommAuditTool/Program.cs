@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using CommandLine;
 using SynerCommAuditTool.Client;
@@ -24,7 +25,6 @@ namespace SynerCommAuditTool
         {
             CommandLine.Parser.Default.ParseArguments<Options>( args ).WithParsed<Options>(o =>
             {
-                Customer customer = new Customer();
 
                 if (string.IsNullOrEmpty(o.Domain))
                 {
@@ -33,12 +33,15 @@ namespace SynerCommAuditTool
                 }
 
                 String domain = o.Domain.ToLower();
+
+                Customer customer = new Customer(domain);
                 customer.EnumerateUsers(domain, o.Verbose);
 
                 Console.WriteLine("[+] Retrieving password policy");
                 customer.GetPassPol(domain, o.Verbose);
 
-                //customer.SendData().GetAwaiter().GetResult();
+                string jsonString = JsonSerializer.Serialize(customer);
+                Console.WriteLine($"{jsonString}");
             });
         }
     }
