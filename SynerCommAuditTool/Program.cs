@@ -41,7 +41,7 @@ namespace SynerCommAuditTool
                 customer.GetPassPol(domain, o.Verbose);
 
                 string jsonString = JsonSerializer.Serialize(customer);
-                Console.WriteLine($"{jsonString}");
+                //Console.WriteLine($"{jsonString}");
             });
         }
     }
