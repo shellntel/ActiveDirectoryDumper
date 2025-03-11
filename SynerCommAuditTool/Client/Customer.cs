@@ -178,6 +178,8 @@ namespace SynerCommAuditTool.Client
             Console.WriteLine("[+] Connecting to LDAP");
 
             DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
+            directoryEntry.RefreshCache();
+
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(&(objectCategory=person)(objectClass=user))");
             String[] userProperties = new string[] {
                 "cn",
@@ -197,6 +199,7 @@ namespace SynerCommAuditTool.Client
             };
 
             directorySearcher.PropertiesToLoad.AddRange(userProperties);
+
 
             SearchResultCollection results = directorySearcher.FindAll();
 
@@ -328,6 +331,7 @@ namespace SynerCommAuditTool.Client
             String LdapString = GetLdapString(this.Name);
 
             DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
+            directoryEntry.RefreshCache();
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=trustedDomain)");
 
             String[] trustFields = {"trustpartner", "trustdirection", "trusttype"};
@@ -387,6 +391,7 @@ namespace SynerCommAuditTool.Client
             Console.WriteLine("[+] Connecting to LDAP");
 
             DirectoryEntry directoryEntry = new DirectoryEntry(ldapConnectionString);
+            directoryEntry.RefreshCache();
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=domainDNS)");
 
             String[] passwordProps = {"maxPwdAge", "minPwdAge", "minPwdLength", "pwdProperties", "lockoutDuration", "lockoutObservationWindow", "lockoutThreshold"};
