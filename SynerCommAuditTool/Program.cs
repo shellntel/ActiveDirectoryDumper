@@ -1,12 +1,6 @@
 ﻿using CommandLine;
-using CsvHelper;
-using CsvHelper.Configuration;
 using SynerCommAuditTool.Client;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Text;
 using System.Text.Json;
 
 namespace SynerCommAuditTool

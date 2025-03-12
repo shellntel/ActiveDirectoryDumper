@@ -4,7 +4,6 @@ using System.DirectoryServices;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Security.Principal;
 
 namespace SynerCommAuditTool.Client
@@ -496,14 +495,14 @@ namespace SynerCommAuditTool.Client
                 Directory.CreateDirectory(dirName);
             }
 
-            using(StreamWriter writetext = new StreamWriter($"{dirName}\\policies.csv", false))
+            using (StreamWriter writetext = new StreamWriter($"{dirName}\\policies.csv", false))
             {
                 writetext.WriteLine("Name\tMinPasswordAge\tMaxPwdAge\tMinPasswordLength\tPwdProperties\tLockoutDuration\tLockoutWindow\tLockoutThreshold");
                 writetext.WriteLine($"{this.Name}\t{this.MinPasswordLength}\t{this.MaxPwdAge}\t{this.MinPasswordLength}\t{this.PwdProperties}\t{this.LockoutDuration}\t{this.LockoutObservationWindow}\t{this.LockoutThreshold}");
             }
 
 
-            using(StreamWriter writetext = new StreamWriter($"{dirName}\\users.csv", false))
+            using (StreamWriter writetext = new StreamWriter($"{dirName}\\users.csv", false))
             {
                 writetext.WriteLine("Name\tFirst\tLast\tSamAccountName\tGroupMemberCount\tMemberOf\tDisplayName\tPrimaryGroupID\tWhenCreated\tWhenChanged\tLastLogon\tUACFlags\tPasswordLastSet\tLockoutTime\tSID\tDescription");
                 foreach (User user in this.Users)
@@ -512,7 +511,7 @@ namespace SynerCommAuditTool.Client
                 }
             }
 
-            using(StreamWriter writetext = new StreamWriter($"{dirName}\\groups.csv", false))
+            using (StreamWriter writetext = new StreamWriter($"{dirName}\\groups.csv", false))
             {
                 writetext.WriteLine("Name\tDescription\tGroupType\tMemberCount\tMembers");
                 foreach (Group group in this.Groups)
