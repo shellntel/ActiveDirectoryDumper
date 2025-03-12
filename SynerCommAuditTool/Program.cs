@@ -30,10 +30,7 @@ namespace SynerCommAuditTool
                 String domain = o.Domain.ToLower();
 
                 Customer customer = new Customer(domain);
-                customer.EnumerateUsers(domain, o.Verbose);
-
-                Console.WriteLine("[+] Retrieving password policy");
-                customer.GetPassPol(domain, o.Verbose);
+                customer.EnumerateDomain(domain, o.Verbose);
 
                 string jsonString = JsonSerializer.Serialize(customer);
                 Console.WriteLine($"{jsonString}");

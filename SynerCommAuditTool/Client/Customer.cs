@@ -130,8 +130,10 @@ namespace SynerCommAuditTool.Client
             return (first, last);
         }
 
-        public void EnumerateUsers(String domain, bool verbose)
+        public void EnumerateDomain(String domain, bool verbose)
         {
+            Console.WriteLine("[+] Starting enumeration");
+
             String LdapString = GetLdapString(domain);
 
             Console.WriteLine("[+] Connecting to LDAP");
@@ -249,6 +251,7 @@ namespace SynerCommAuditTool.Client
 
             this.GetDomainTrusts(verbose);
             this.GetGroupInfo(verbose);
+            this.GetPassPol(domain, verbose);
         }
 
         private (String, String) ParseTrustInfo(String trustDirection, String trustType)
@@ -430,19 +433,15 @@ namespace SynerCommAuditTool.Client
         {
             String LdapString = GetLdapString(domain);
 
-            Console.WriteLine("[+] Finding Domain Controller");
+            Console.WriteLine("[+] Getting password policy");
 
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.Domain);
             Domain adDomain = Domain.GetDomain(domainContext);
             DomainController dc = adDomain.FindDomainController();
-            Console.WriteLine($"[+] Found DC: {dc.Name}");
 
             String domainString = LdapString.Substring(7);
 
             String ldapConnectionString = $"LDAP://{dc}/{domainString}";
-
-
-            Console.WriteLine("[+] Connecting to LDAP");
 
             DirectoryEntry directoryEntry = new DirectoryEntry(ldapConnectionString);
             directoryEntry.RefreshCache();
@@ -451,8 +450,6 @@ namespace SynerCommAuditTool.Client
             String[] passwordProps = { "maxPwdAge", "minPwdAge", "minPwdLength", "pwdProperties", "lockoutDuration", "lockoutObservationWindow", "lockoutThreshold" };
 
             directorySearcher.PropertiesToLoad.AddRange(passwordProps);
-
-            Console.WriteLine("[+] Querying password policy");
 
             SearchResult result = directorySearcher.FindOne();
             if (result == null)
