@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using CommandLine;
+﻿using CommandLine;
 using SynerCommAuditTool.Client;
+using System;
+using System.Text.Json;
 
 namespace SynerCommAuditTool
 {
@@ -15,7 +10,7 @@ namespace SynerCommAuditTool
         public class Options
         {
             [Option("domain", Required = true, HelpText = "Active Directory domain name. E.g., acme.local")]
-            public String Domain {  get; set; }
+            public String Domain { get; set; }
 
             [Option('v', "verbose", Default = false)]
             public bool Verbose { get; set; }
@@ -23,7 +18,7 @@ namespace SynerCommAuditTool
 
         static void Main(string[] args)
         {
-            CommandLine.Parser.Default.ParseArguments<Options>( args ).WithParsed<Options>(o =>
+            CommandLine.Parser.Default.ParseArguments<Options>(args).WithParsed<Options>(o =>
             {
 
                 if (string.IsNullOrEmpty(o.Domain))
@@ -41,7 +36,7 @@ namespace SynerCommAuditTool
                 customer.GetPassPol(domain, o.Verbose);
 
                 string jsonString = JsonSerializer.Serialize(customer);
-                Console.WriteLine($"{jsonString}");
+                //Console.WriteLine($"{jsonString}");
             });
         }
     }

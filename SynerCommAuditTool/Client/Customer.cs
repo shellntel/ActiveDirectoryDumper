@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.ActiveDirectory;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SynerCommAuditTool.Client
 {
@@ -44,17 +37,19 @@ namespace SynerCommAuditTool.Client
     {
         public string Name { get; private set; }
         public string PullDate { get; private set; }
-        public int NumberOfResults { get; private set; }
+        public int UserCount { get; private set; }
         public double MinPwdAge { get; private set; }
-        public double MaxPwdAge {  get; private set; }
+        public double MaxPwdAge { get; private set; }
         public int MinPasswordLength { get; private set; }
-        public int PwdProperties {  get; private set; }
-        public double LockoutDuration {  get; private set; }
-        public double LockoutObservationWindow {  get; private set; }
-        public int LockoutThreshold {  get; private set; }
+        public int PwdProperties { get; private set; }
+        public double LockoutDuration { get; private set; }
+        public double LockoutObservationWindow { get; private set; }
+        public int LockoutThreshold { get; private set; }
 
         public List<Dictionary<String, String>> DomainTrusts { get; private set; }
         public User[] Users { get; private set; }
+
+        public Group[] Groups { get; private set; }
 
 
         public Customer(string name)
@@ -97,7 +92,7 @@ namespace SynerCommAuditTool.Client
             }
 
             LdapString += endString;
-            
+
             return LdapString;
         }
 
@@ -134,43 +129,6 @@ namespace SynerCommAuditTool.Client
             return (first, last);
         }
 
-        private Dictionary<String, String> ParsePasswordData(String[] uacFlags)
-        {
-            Dictionary<String, String> passwordDict = new Dictionary<String, String>();
-
-            passwordDict.Add("PasswordCanChange", "True");
-            passwordDict.Add("PasswordRequired", "True");
-            passwordDict.Add("PasswordExpires", "True");
-            passwordDict.Add("AccountDisabled", "False");
-            passwordDict.Add("AccountLocked", "False");
-
-            foreach (String flag in uacFlags)
-            {
-                switch (flag)
-                {
-                    case "PASSWD_CANT_CHANGE":
-                        passwordDict["PasswordCanChange"] = "False";
-                        break;
-                    case "PASSWD_NOTREQD":
-                        passwordDict["PasswordRequired"] = "False";
-                        break;
-                    case "DONT_EXPIRE_PASSWORD":
-                        passwordDict["PasswordExpires"] = "False";
-                        break;
-                    case "ACCOUNT_DISABLED":
-                        passwordDict["AccountDisabled"] = "True";
-                        break;
-                    case "ACCOUNT_LOCKED":
-                        passwordDict["AccountLocked"] = "True";
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            return passwordDict;
-        }
-
         public void EnumerateUsers(String domain, bool verbose)
         {
             String LdapString = GetLdapString(domain);
@@ -204,7 +162,7 @@ namespace SynerCommAuditTool.Client
             SearchResultCollection results = directorySearcher.FindAll();
 
             Console.WriteLine($"[*] Found {results.Count} users!");
-            this.NumberOfResults = results.Count;
+            this.UserCount = results.Count;
 
             this.Users = new User[results.Count];
 
@@ -213,20 +171,22 @@ namespace SynerCommAuditTool.Client
             {
                 ResultPropertyCollection resultPropColl = result.Properties;
 
-                String cn             = resultPropColl["cn"].Count > 0 ? resultPropColl["cn"][0].ToString() : "";
-                String name           = resultPropColl["name"].Count > 0 ? resultPropColl["name"][0].ToString() : "";
+                String cn = resultPropColl["cn"].Count > 0 ? resultPropColl["cn"][0].ToString() : "";
+                String name = resultPropColl["name"].Count > 0 ? resultPropColl["name"][0].ToString() : "";
                 String samAccountName = resultPropColl["samAccountName"].Count > 0 ? resultPropColl["samAccountName"][0].ToString() : "";
-                String memberOf       = resultPropColl["memberof"].Count > 0 ? resultPropColl["memberof"][0].ToString() : "";
-                String displayName    = resultPropColl["displayname"].Count > 0 ? resultPropColl["displayname"][0].ToString() : "";
+                String memberOf = resultPropColl["memberof"].Count > 0 ? resultPropColl["memberof"][0].ToString() : "";
+                String displayName = resultPropColl["displayname"].Count > 0 ? resultPropColl["displayname"][0].ToString() : "";
                 String primaryGroupId = resultPropColl["primarygroupid"].Count > 0 ? resultPropColl["primarygroupid"][0].ToString() : "";
-                String description    = resultPropColl["description"].Count > 0 ? resultPropColl["description"][0].ToString() : "";
-                String pwdLastSet     = resultPropColl["pwdlastset"].Count > 0 ? this.ParseDateTime((long)resultPropColl["pwdlastset"][0]) : "";
-                String lockoutTime    = resultPropColl["lockouttime"].Count > 0 ? this.ParseDateTime((long)resultPropColl["lockouttime"][0]) : "";
-                String whenCreated    = resultPropColl["whencreated"].Count > 0 ? resultPropColl["whencreated"][0].ToString() : "";
-                String whenChanged    = resultPropColl["whenchanged"].Count > 0 ? resultPropColl["whenchanged"][0].ToString() : "";
-                String lastLogon      = resultPropColl["lastlogon"].Count > 0 ? this.ParseDateTime((long)resultPropColl["lastlogon"][0]) : "";
+                String description = resultPropColl["description"].Count > 0 ? resultPropColl["description"][0].ToString() : "";
+                String pwdLastSet = resultPropColl["pwdlastset"].Count > 0 ? this.ParseDateTime((long)resultPropColl["pwdlastset"][0]) : "";
+                String lockoutTime = resultPropColl["lockouttime"].Count > 0 ? this.ParseDateTime((long)resultPropColl["lockouttime"][0]) : "";
+                String whenCreated = resultPropColl["whencreated"].Count > 0 ? resultPropColl["whencreated"][0].ToString() : "";
+                String whenChanged = resultPropColl["whenchanged"].Count > 0 ? resultPropColl["whenchanged"][0].ToString() : "";
+                String lastLogon = resultPropColl["lastlogon"].Count > 0 ? this.ParseDateTime((long)resultPropColl["lastlogon"][0]) : "";
 
                 (String first, String last) = this.ParseName(name);
+
+                Console.WriteLine($"member of count: {resultPropColl["memberof"].Count}");
 
                 String objectSid = "";
                 if (resultPropColl["objectsid"].Count > 0)
@@ -242,8 +202,6 @@ namespace SynerCommAuditTool.Client
                 {
                     uacFlags = this.ParseUacFlags(userAccountControl);
                 }
-
-                Dictionary<String, String> passwordData = this.ParsePasswordData(uacFlags);
 
                 if (verbose)
                 {
@@ -278,7 +236,8 @@ namespace SynerCommAuditTool.Client
             directoryEntry.Dispose();
             directorySearcher.Dispose();
 
-            this.GetDomainTrusts();
+            this.GetDomainTrusts(verbose);
+            this.GetGroupInfo(verbose);
         }
 
         private (String, String) ParseTrustInfo(String trustDirection, String trustType)
@@ -286,7 +245,7 @@ namespace SynerCommAuditTool.Client
             String parsedTrustDirection = String.Empty;
             String parsedTrustType = String.Empty;
 
-            switch(trustDirection)
+            switch (trustDirection)
             {
                 case "1":
                     parsedTrustDirection = "Inbound";
@@ -302,16 +261,16 @@ namespace SynerCommAuditTool.Client
                     break;
             }
 
-            switch(trustType)
+            switch (trustType)
             {
                 case "1":
-                    parsedTrustType = "Downlevel (NT 4.0)";
+                    parsedTrustType = "Downlevel";
                     break;
                 case "2":
-                    parsedTrustType = "Uplevel (AD)";
+                    parsedTrustType = "Uplevel";
                     break;
                 case "3":
-                    parsedTrustType = "MIT (Kerberos Realm)";
+                    parsedTrustType = "MIT";
                     break;
                 case "4":
                     parsedTrustType = "DCE";
@@ -324,7 +283,7 @@ namespace SynerCommAuditTool.Client
             return (parsedTrustDirection, parsedTrustType);
         }
 
-        public void GetDomainTrusts()
+        public void GetDomainTrusts(bool verbose)
         {
             Console.WriteLine("[+] Finding Domain Trusts");
 
@@ -334,7 +293,7 @@ namespace SynerCommAuditTool.Client
             directoryEntry.RefreshCache();
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=trustedDomain)");
 
-            String[] trustFields = {"trustpartner", "trustdirection", "trusttype"};
+            String[] trustFields = { "trustpartner", "trustdirection", "trusttype" };
 
             directorySearcher.PropertiesToLoad.AddRange(trustFields);
 
@@ -357,9 +316,12 @@ namespace SynerCommAuditTool.Client
 
                 (String parsedTrustDirection, String parsedTrustType) = this.ParseTrustInfo(trustDirection, trustType);
 
-                Console.WriteLine($"Trust: {trustPartner}");
-                Console.WriteLine($"Trust Direction: {parsedTrustDirection}");
-                Console.WriteLine($"Trust Type: {parsedTrustType}");
+                if (verbose)
+                {
+                    Console.WriteLine($"Trust: {trustPartner}");
+                    Console.WriteLine($"Trust Direction: {parsedTrustDirection}");
+                    Console.WriteLine($"Trust Type: {parsedTrustType}");
+                }
 
                 Dictionary<String, String> trust = new Dictionary<String, String>();
 
@@ -367,9 +329,89 @@ namespace SynerCommAuditTool.Client
                 trust.Add("TrustDirection", parsedTrustDirection);
                 trust.Add("TrustType", parsedTrustType);
 
-                domainTrusts.Add(trust);    
+                domainTrusts.Add(trust);
             }
             this.DomainTrusts = domainTrusts;
+        }
+
+        private String ParseGroupType(int groupType)
+        {
+            bool isSecurity = (groupType & 0x80000000) != 0;
+            String securityType = isSecurity ? "Security" : "Distribution";
+
+            int scope = groupType & 0x0000000E;
+            String scopeType = String.Empty;
+
+            switch (scope)
+            {
+                case 2:
+                    scopeType = "Global";
+                    break;
+                case 4:
+                    scopeType = "Domain Local";
+                    break;
+                case 8:
+                    scopeType = "Universal";
+                    break;
+                default:
+                    scopeType = "Unknown";
+                    break;
+            }
+            return $"{scopeType} {securityType} Group";
+        }
+
+        public void GetGroupInfo(bool verbose)
+        {
+            String LdapString = GetLdapString(this.Name);
+
+            DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
+            directoryEntry.RefreshCache();
+            DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=group)");
+
+            String[] groupFields = { "cn", "description", "grouptype", "member" };
+
+            directorySearcher.PropertiesToLoad.AddRange(groupFields);
+
+            SearchResultCollection results = directorySearcher.FindAll();
+            if (results.Count == 0)
+            {
+                Console.WriteLine("[+] No Groups found!");
+                return;
+            }
+
+            this.Groups = new Group[results.Count];
+
+            int count = 0;
+            foreach (SearchResult result in results)
+            {
+                ResultPropertyCollection resultProps = result.Properties;
+
+                String cn = resultProps["cn"].Count > 0 ? resultProps["cn"][0].ToString() : "";
+                String description = resultProps["description"].Count > 0 ? resultProps["description"][0].ToString() : "";
+                int groupType = resultProps["grouptype"].Count > 0 ? (int)resultProps["grouptype"][0] : 0;
+                int memberCount = resultProps["member"].Count;
+                String parsedGroupType = this.ParseGroupType(groupType);
+
+                if (verbose)
+                {
+                    Console.WriteLine($"cn: {cn}");
+                    Console.WriteLine($"description: {description}");
+                    Console.WriteLine($"group type: {parsedGroupType}");
+                    Console.WriteLine($"member count: {memberCount}");
+                }
+
+                List<String> groupMembers = new List<string>();
+                foreach (String m in resultProps["member"])
+                {
+                    Console.WriteLine($"{m}");
+                    String userString = m.Split(',')[0];
+                    groupMembers.Add(userString.Substring(2));
+                }
+                Group group = new Group(cn, description, parsedGroupType, memberCount, groupMembers);
+                this.Groups[count] = group;
+
+                count++;
+            }
         }
 
         public void GetPassPol(String domain, bool verbose)
@@ -394,7 +436,7 @@ namespace SynerCommAuditTool.Client
             directoryEntry.RefreshCache();
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=domainDNS)");
 
-            String[] passwordProps = {"maxPwdAge", "minPwdAge", "minPwdLength", "pwdProperties", "lockoutDuration", "lockoutObservationWindow", "lockoutThreshold"};
+            String[] passwordProps = { "maxPwdAge", "minPwdAge", "minPwdLength", "pwdProperties", "lockoutDuration", "lockoutObservationWindow", "lockoutThreshold" };
 
             directorySearcher.PropertiesToLoad.AddRange(passwordProps);
 
