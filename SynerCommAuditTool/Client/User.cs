@@ -7,7 +7,8 @@
         public string First { get; private set; }
         public string Last { get; private set; }
         public string SamAccountName { get; private set; }
-        public string MemberOf { get; private set; }
+        public string GroupMemberCount { get; private set; }
+        public string[] MemberOf { get; private set; }
         public string DisplayName { get; private set; }
         public string PrimaryGroupId { get; private set; }
         public string WhenCreated { get; private set; }
@@ -25,7 +26,8 @@
             string first,
             string last,
             string samAccountName,
-            string memberOf,
+            string groupMemberCount,
+            string[] memberOf,
             string displayName,
             string primaryGroupId,
             string whenCreated,
@@ -43,6 +45,7 @@
             this.First = first;
             this.Last = last;
             this.SamAccountName = samAccountName;
+            this.GroupMemberCount = groupMemberCount;
             this.MemberOf = memberOf;
             this.DisplayName = displayName;
             this.PrimaryGroupId = primaryGroupId;

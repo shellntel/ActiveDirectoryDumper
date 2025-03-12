@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.ActiveDirectory;
+using System.Linq;
 using System.Security.Principal;
 
 namespace SynerCommAuditTool.Client
@@ -185,8 +186,17 @@ namespace SynerCommAuditTool.Client
                 String lastLogon = resultPropColl["lastlogon"].Count > 0 ? this.ParseDateTime((long)resultPropColl["lastlogon"][0]) : "";
 
                 (String first, String last) = this.ParseName(name);
+                List<String> memberGroups = new List<String>();
+                int groupMemberCount = resultPropColl["memberof"].Count;
 
-                Console.WriteLine($"member of count: {resultPropColl["memberof"].Count}");
+                if (groupMemberCount > 0)
+                {
+                    foreach (String item in resultPropColl["memberof"])
+                    {
+                        String groupString = item.Split(',')[0];
+                        memberGroups.Add(groupString.Substring(3));
+                    }
+                }
 
                 String objectSid = "";
                 if (resultPropColl["objectsid"].Count > 0)
@@ -205,7 +215,7 @@ namespace SynerCommAuditTool.Client
 
                 if (verbose)
                 {
-                    Console.WriteLine($"{cn}, {name}, {first}, {last}, {samAccountName}, {memberOf}, {displayName}, {primaryGroupId}, {whenCreated}, {whenChanged}, {lastLogon}, [{String.Join(",", uacFlags)}], {pwdLastSet}, {lockoutTime}, {objectSid}, {description}");
+                    Console.WriteLine($"{cn}, {name}, {first}, {last}, {samAccountName}, {groupMemberCount}, [{String.Join(",", memberGroups)}], {displayName}, {primaryGroupId}, {whenCreated}, {whenChanged}, {lastLogon}, [{String.Join(",", uacFlags)}], {pwdLastSet}, {lockoutTime}, {objectSid}, {description}");
                 }
 
                 User user = new User(
@@ -214,7 +224,8 @@ namespace SynerCommAuditTool.Client
                     first,
                     last,
                     samAccountName,
-                    memberOf,
+                    groupMemberCount.ToString(),
+                    memberGroups.ToArray(),
                     displayName,
                     primaryGroupId,
                     whenCreated,
@@ -362,6 +373,8 @@ namespace SynerCommAuditTool.Client
 
         public void GetGroupInfo(bool verbose)
         {
+            Console.WriteLine("[+] Getting Domain Groups");
+
             String LdapString = GetLdapString(this.Name);
 
             DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
@@ -403,9 +416,8 @@ namespace SynerCommAuditTool.Client
                 List<String> groupMembers = new List<string>();
                 foreach (String m in resultProps["member"])
                 {
-                    Console.WriteLine($"{m}");
                     String userString = m.Split(',')[0];
-                    groupMembers.Add(userString.Substring(2));
+                    groupMembers.Add(userString.Substring(3));
                 }
                 Group group = new Group(cn, description, parsedGroupType, memberCount, groupMembers);
                 this.Groups[count] = group;
