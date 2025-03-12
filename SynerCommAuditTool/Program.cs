@@ -1,6 +1,12 @@
 ﻿using CommandLine;
+using CsvHelper;
+using CsvHelper.Configuration;
 using SynerCommAuditTool.Client;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text;
 using System.Text.Json;
 
 namespace SynerCommAuditTool
@@ -33,7 +39,11 @@ namespace SynerCommAuditTool
                 customer.EnumerateDomain(domain, o.Verbose);
 
                 string jsonString = JsonSerializer.Serialize(customer);
-                Console.WriteLine($"{jsonString}");
+                if (o.Verbose)
+                    Console.WriteLine($"{jsonString}");
+
+                Console.WriteLine("[+] Generating CSV files");
+                customer.GenerateCSVs();
             });
         }
     }

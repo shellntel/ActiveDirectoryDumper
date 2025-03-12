@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.ActiveDirectory;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Principal;
 
@@ -484,6 +486,51 @@ namespace SynerCommAuditTool.Client
 
             directoryEntry.Dispose();
             directorySearcher.Dispose();
+        }
+
+        public void GenerateCSVs()
+        {
+            String dirName = "SynerCommAuditTool_DomainOutput";
+            if (!Directory.Exists(dirName))
+            {
+                Directory.CreateDirectory(dirName);
+            }
+
+            using(StreamWriter writetext = new StreamWriter($"{dirName}\\policies.csv", false))
+            {
+                writetext.WriteLine("Name\tMinPasswordAge\tMaxPwdAge\tMinPasswordLength\tPwdProperties\tLockoutDuration\tLockoutWindow\tLockoutThreshold");
+                writetext.WriteLine($"{this.Name}\t{this.MinPasswordLength}\t{this.MaxPwdAge}\t{this.MinPasswordLength}\t{this.PwdProperties}\t{this.LockoutDuration}\t{this.LockoutObservationWindow}\t{this.LockoutThreshold}");
+            }
+
+
+            using(StreamWriter writetext = new StreamWriter($"{dirName}\\users.csv", false))
+            {
+                writetext.WriteLine("Name\tFirst\tLast\tSamAccountName\tGroupMemberCount\tMemberOf\tDisplayName\tPrimaryGroupID\tWhenCreated\tWhenChanged\tLastLogon\tUACFlags\tPasswordLastSet\tLockoutTime\tSID\tDescription");
+                foreach (User user in this.Users)
+                {
+                    writetext.WriteLine($"{user.Cn}\t{user.First}\t{user.Last}\t{user.SamAccountName}\t{user.GroupMemberCount}\t{String.Join(",", user.MemberOf)}\t{user.DisplayName}\t{user.PrimaryGroupId}\t{user.WhenCreated}\t{user.WhenChanged}\t{user.LastLogon}\t{String.Join(",", user.UserAccountControl)}\t{user.PwdLastSet}\t{user.LockoutTime}\t{user.ObjectSid}\t{user.Description}");
+                }
+            }
+
+            using(StreamWriter writetext = new StreamWriter($"{dirName}\\groups.csv", false))
+            {
+                writetext.WriteLine("Name\tDescription\tGroupType\tMemberCount\tMembers");
+                foreach (Group group in this.Groups)
+                {
+                    writetext.WriteLine($"{group.Cn}\t{group.Description}\t{group.GroupType}\t{group.MemberCount}\t{String.Join(",", group.Members)}");
+                }
+            }
+
+            if (File.Exists($"{dirName}.zip"))
+            {
+                File.Delete($"{dirName}.zip");
+            }
+            ZipFile.CreateFromDirectory(dirName, $"{dirName}.zip");
+
+            DirectoryInfo dirInfo = new DirectoryInfo(dirName);
+            dirInfo.Delete(true);
+
+            Console.WriteLine($"[+] Created zip file: {dirName}.zip");
         }
     }
 }
