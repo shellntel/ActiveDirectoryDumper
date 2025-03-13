@@ -79,14 +79,11 @@ namespace SynerCommAuditTool.Client
             return flags.ToArray();
         }
 
-        private static String GetLdapString(String domain)
+        private String GetLdapString()
         {
+            String domain = this.Name;
+
             string[] domainFqdn = domain.Split('.');
-            if (domainFqdn.Length == 1)
-            {
-                Console.WriteLine("[!] Need domain FQDN! E.g., acme.local");
-                return "";
-            }
 
             String endString = $"dc={domainFqdn[domainFqdn.Length - 1]}";
             String LdapString = "LDAP://";
@@ -134,15 +131,11 @@ namespace SynerCommAuditTool.Client
             return (first, last);
         }
 
-        public void EnumerateDomain(bool verbose)
+        public void EnumerateDomain(bool verbose, String outputDir)
         {
             Console.WriteLine("[+] Starting enumeration");
 
-            String domain = this.Name;
-
-            String LdapString = GetLdapString(domain);
-
-            Console.WriteLine($"LDAP String: {LdapString}");
+            String LdapString = GetLdapString();
 
             Console.WriteLine("[+] Connecting to LDAP");
 
@@ -225,7 +218,7 @@ namespace SynerCommAuditTool.Client
 
                 if (verbose)
                 {
-                    Console.WriteLine($"{cn}, {name}, {first}, {last}, {samAccountName}, {groupMemberCount}, [{String.Join(",", memberGroups)}], {displayName}, {primaryGroupId}, {whenCreated}, {whenChanged}, {lastLogon}, [{String.Join(",", uacFlags)}], {pwdLastSet}, {lockoutTime}, {objectSid}, {description}");
+                    Console.WriteLine($"CN: {cn}, SamAccountName: {samAccountName}, Group Count: {groupMemberCount}, UAC Flags: [{String.Join(",", uacFlags)}], Password Last Set: {pwdLastSet}, SID: {objectSid}, Description: {description}");
                 }
 
                 User user = new User(
@@ -259,7 +252,9 @@ namespace SynerCommAuditTool.Client
 
             this.GetDomainTrusts(verbose);
             this.GetGroupInfo(verbose);
-            this.GetPassPol(domain, verbose);
+            this.GetPassPol(verbose);
+
+            this.GenerateCSVs(outputDir);
         }
 
         private (String, String) ParseTrustInfo(String trustDirection, String trustType)
@@ -309,7 +304,7 @@ namespace SynerCommAuditTool.Client
         {
             Console.WriteLine("[+] Finding Domain Trusts");
 
-            String LdapString = GetLdapString(this.Name);
+            String LdapString = GetLdapString();
 
             DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
             directoryEntry.RefreshCache();
@@ -386,7 +381,7 @@ namespace SynerCommAuditTool.Client
         {
             Console.WriteLine("[+] Getting Domain Groups");
 
-            String LdapString = GetLdapString(this.Name);
+            String LdapString = GetLdapString();
 
             DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
             directoryEntry.RefreshCache();
@@ -418,10 +413,7 @@ namespace SynerCommAuditTool.Client
 
                 if (verbose)
                 {
-                    Console.WriteLine($"cn: {cn}");
-                    Console.WriteLine($"description: {description}");
-                    Console.WriteLine($"group type: {parsedGroupType}");
-                    Console.WriteLine($"member count: {memberCount}");
+                    Console.WriteLine($"CN: {cn}, Description: {description}, Group Type: {parsedGroupType}, Member Count: {memberCount}");
                 }
 
                 List<String> groupMembers = new List<string>();
@@ -437,9 +429,9 @@ namespace SynerCommAuditTool.Client
             }
         }
 
-        public void GetPassPol(String domain, bool verbose)
+        public void GetPassPol(bool verbose)
         {
-            String LdapString = GetLdapString(domain);
+            String LdapString = GetLdapString();
 
             Console.WriteLine("[+] Getting password policy");
 
@@ -494,22 +486,17 @@ namespace SynerCommAuditTool.Client
             directorySearcher.Dispose();
         }
 
-        public void GenerateCSVs()
+        public void GenerateCSVs(String outputDir)
         {
-            String dirName = "SynerCommAuditTool_DomainOutput";
-            if (!Directory.Exists(dirName))
-            {
-                Directory.CreateDirectory(dirName);
-            }
-
-            using (StreamWriter writetext = new StreamWriter($"{dirName}\\policies.csv", false))
+            Console.WriteLine("[+] Generating CSV files");
+            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\policies.csv", false))
             {
                 writetext.WriteLine("Name\tMinPasswordAge\tMaxPwdAge\tMinPasswordLength\tPwdProperties\tLockoutDuration\tLockoutWindow\tLockoutThreshold");
                 writetext.WriteLine($"{this.Name}\t{this.MinPasswordLength}\t{this.MaxPwdAge}\t{this.MinPasswordLength}\t{this.PwdProperties}\t{this.LockoutDuration}\t{this.LockoutObservationWindow}\t{this.LockoutThreshold}");
             }
 
 
-            using (StreamWriter writetext = new StreamWriter($"{dirName}\\users.csv", false))
+            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\users.csv", false))
             {
                 writetext.WriteLine("Name\tFirst\tLast\tSamAccountName\tGroupMemberCount\tMemberOf\tDisplayName\tPrimaryGroupID\tWhenCreated\tWhenChanged\tLastLogon\tUACFlags\tPasswordLastSet\tLockoutTime\tSID\tDescription");
                 foreach (User user in this.Users)
@@ -518,7 +505,7 @@ namespace SynerCommAuditTool.Client
                 }
             }
 
-            using (StreamWriter writetext = new StreamWriter($"{dirName}\\groups.csv", false))
+            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\groups.csv", false))
             {
                 writetext.WriteLine("Name\tDescription\tGroupType\tMemberCount\tMembers");
                 foreach (Group group in this.Groups)
@@ -526,17 +513,6 @@ namespace SynerCommAuditTool.Client
                     writetext.WriteLine($"{group.Cn}\t{group.Description}\t{group.GroupType}\t{group.MemberCount}\t{String.Join(",", group.Members)}");
                 }
             }
-
-            if (File.Exists($"{dirName}.zip"))
-            {
-                File.Delete($"{dirName}.zip");
-            }
-            ZipFile.CreateFromDirectory(dirName, $"{dirName}.zip");
-
-            DirectoryInfo dirInfo = new DirectoryInfo(dirName);
-            dirInfo.Delete(true);
-
-            Console.WriteLine($"[+] Created zip file: {dirName}.zip");
         }
     }
 }

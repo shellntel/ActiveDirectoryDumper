@@ -1,6 +1,8 @@
 ﻿using CommandLine;
 using SynerCommAuditTool.Client;
+using SynerCommAuditTool.Util;
 using System;
+using System.IO;
 using System.Text.Json;
 
 namespace SynerCommAuditTool
@@ -21,23 +23,42 @@ namespace SynerCommAuditTool
             CommandLine.Parser.Default.ParseArguments<Options>(args).WithParsed<Options>(o =>
             {
 
+                String outputDir = "SynerCommAuditTool_DomainOutput";
+
+                if (!Directory.Exists(outputDir))
+                {
+                    Directory.CreateDirectory(outputDir);
+                }
+
                 if (!o.Dump)
                 {
                     Customer customer = new Customer();
-                    customer.EnumerateDomain(o.Verbose);
+                    customer.EnumerateDomain(o.Verbose, outputDir);
 
-                    string jsonString = JsonSerializer.Serialize(customer);
-                    if (o.Verbose)
-                        Console.WriteLine($"{jsonString}");
+                    //string jsonString = JsonSerializer.Serialize(customer);
+                    //if (o.Verbose)
+                    //    Console.WriteLine($"{jsonString}");
 
-                    Console.WriteLine("[+] Generating CSV files");
-                    customer.GenerateCSVs();
+                    Console.WriteLine("[+] Performing hash collection");
+                    Extractor extractor = new Extractor();
+                    extractor.Extract(o.Verbose, outputDir);
+
+                    Console.WriteLine("[+] Generating zip file");
+                    GenerateZip.Create(outputDir);
                 }
                 else
                 {
-                    Console.WriteLine("[+] Performing hash collection");
-                    Extractor extractor = new Extractor();
-                    extractor.Extract();
+                    try
+                    {
+                        Console.WriteLine("[+] Performing hash collection");
+                        Extractor extractor = new Extractor();
+                        extractor.Extract(o.Verbose, outputDir);
+                        Console.WriteLine($"[+] Hashes written to {outputDir}/hashes.pwdump");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[!] Error collecting hashes! {ex.Message}");
+                    }
                 }
             });
         }

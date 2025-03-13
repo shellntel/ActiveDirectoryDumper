@@ -4,6 +4,7 @@ using DSInternals.Replication.Model;
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Principal;
@@ -14,13 +15,6 @@ namespace SynerCommAuditTool.Client
 {
     public class Extractor
     {
-        private bool IsSuccess {  get; set; }
-
-        public Extractor()
-        {
-            this.IsSuccess = false;
-        }
-
          private String GetNamingContext(String domain)
          {
             string[] domainFqdn = domain.Split('.');
@@ -39,40 +33,50 @@ namespace SynerCommAuditTool.Client
         }
 
 
-        public void Extract()
+        public void Extract(bool verbose, String outputDir)
         {
+
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.Domain);
             Domain adDomain = Domain.GetDomain(domainContext);
             DomainController dc = adDomain.FindDomainController();
 
-            Console.WriteLine($"Domain Name: {adDomain.Name}");
-            Console.WriteLine($"DC: {dc}");
-
             String contextString = this.GetNamingContext(adDomain.Name);
-            Console.WriteLine($"Context String: {contextString}");
 
             DirectoryReplicationClient replicator = new DirectoryReplicationClient(dc.ToString(), RpcProtocol.TCP);
 
-            var accounts = replicator.GetAccounts(contextString);
+            var accounts = replicator.GetAccounts(contextString, (c, processed, total) =>
+                Console.WriteLine($"[+] Progress: {processed}/{total}")
+            );
 
-            foreach ( var account in accounts )
+            if (verbose)
             {
-                String lmHash = "aad3b435b51404eeaad3b435b51404ee";
-                String ntHash = "";
-
-                if (account.LMHash != null && account.LMHash.Length > 0)
-                {
-                    lmHash = BitConverter.ToString(account.LMHash).Replace("-", "");
-                }
-                if (account.NTHash != null && account.NTHash.Length > 0)
-                {
-                    ntHash = BitConverter.ToString(account.NTHash).Replace("-", "");
-                }
-                Console.WriteLine($"{account.LogonName}:{account.PrimaryGroupId}:{lmHash}:{ntHash}:::");
+                accounts = replicator.GetAccounts(contextString);
             }
 
-            replicator.Dispose();
+            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\hashes.pwdump", false))
+            {
+                foreach (var account in accounts)
+                {
+                    String lmHash = "aad3b435b51404eeaad3b435b51404ee";
+                    String ntHash = "";
 
+                    if (account.LMHash != null && account.LMHash.Length > 0)
+                    {
+                        lmHash = BitConverter.ToString(account.LMHash).Replace("-", "");
+                    }
+                    if (account.NTHash != null && account.NTHash.Length > 0)
+                    {
+                        ntHash = BitConverter.ToString(account.NTHash).Replace("-", "").ToLower();
+                    }
+                    writetext.WriteLine($"{account.LogonName}:{account.PrimaryGroupId}:{lmHash}:{ntHash}:::");
+
+                    if (verbose)
+                    {
+                        Console.WriteLine($"{account.LogonName}:{account.PrimaryGroupId}:{lmHash}:{ntHash}:::");
+                    }
+                }
+            }
+            replicator.Dispose();
         }
     }
 }
