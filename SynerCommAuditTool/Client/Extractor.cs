@@ -1,9 +1,12 @@
-﻿using DSInternals.Replication;
+﻿using DSInternals.Common.Data;
+using DSInternals.Replication;
+using DSInternals.Replication.Model;
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
 using System.Linq;
 using System.Net;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,7 +41,6 @@ namespace SynerCommAuditTool.Client
 
         public void Extract()
         {
-
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.Domain);
             Domain adDomain = Domain.GetDomain(domainContext);
             DomainController dc = adDomain.FindDomainController();
@@ -47,15 +49,29 @@ namespace SynerCommAuditTool.Client
             Console.WriteLine($"DC: {dc}");
 
             String contextString = this.GetNamingContext(adDomain.Name);
+            Console.WriteLine($"Context String: {contextString}");
 
             DirectoryReplicationClient replicator = new DirectoryReplicationClient(dc.ToString(), RpcProtocol.TCP);
 
             var accounts = replicator.GetAccounts(contextString);
 
-            foreach (var account in accounts)
+            foreach ( var account in accounts )
             {
-                Console.WriteLine();
+                String lmHash = "aad3b435b51404eeaad3b435b51404ee";
+                String ntHash = "";
+
+                if (account.LMHash != null && account.LMHash.Length > 0)
+                {
+                    lmHash = BitConverter.ToString(account.LMHash).Replace("-", "");
+                }
+                if (account.NTHash != null && account.NTHash.Length > 0)
+                {
+                    ntHash = BitConverter.ToString(account.NTHash).Replace("-", "");
+                }
+                Console.WriteLine($"{account.LogonName}:{account.PrimaryGroupId}:{lmHash}:{ntHash}:::");
             }
+
+            replicator.Dispose();
 
         }
     }

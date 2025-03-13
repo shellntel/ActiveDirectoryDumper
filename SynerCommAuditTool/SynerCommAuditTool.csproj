@@ -65,14 +65,20 @@
     <Reference Include="Costura, Version=6.0.0.0, Culture=neutral, PublicKeyToken=9919ef960d84173d, processorArchitecture=MSIL">
       <HintPath>..\packages\Costura.Fody.6.0.0\lib\netstandard2.0\Costura.dll</HintPath>
     </Reference>
-    <Reference Include="DSInternals.Common, Version=5.0.0.0, Culture=neutral, PublicKeyToken=af7e77ba04a3c166, processorArchitecture=MSIL">
-      <HintPath>..\packages\DSInternals.Common.5.0.0\lib\net472\DSInternals.Common.dll</HintPath>
+    <Reference Include="DSInternals.Common, Version=4.14.0.0, Culture=neutral, PublicKeyToken=af7e77ba04a3c166, processorArchitecture=MSIL">
+      <HintPath>..\packages\DSInternals.Common.4.14.0\lib\net472\DSInternals.Common.dll</HintPath>
     </Reference>
-    <Reference Include="DSInternals.Replication, Version=5.0.0.0, Culture=neutral, PublicKeyToken=af7e77ba04a3c166, processorArchitecture=MSIL">
-      <HintPath>..\packages\DSInternals.Replication.5.0.0\lib\net472\DSInternals.Replication.dll</HintPath>
+    <Reference Include="DSInternals.DataStore, Version=4.16.0.0, Culture=neutral, PublicKeyToken=af7e77ba04a3c166, processorArchitecture=MSIL">
+      <HintPath>..\packages\DSInternals.DataStore.4.16.0\lib\net472\DSInternals.DataStore.dll</HintPath>
     </Reference>
-    <Reference Include="DSInternals.Replication.Model, Version=5.0.0.0, Culture=neutral, PublicKeyToken=af7e77ba04a3c166, processorArchitecture=MSIL">
-      <HintPath>..\packages\DSInternals.Replication.5.0.0\lib\net472\DSInternals.Replication.Model.dll</HintPath>
+    <Reference Include="DSInternals.Replication, Version=4.14.0.0, Culture=neutral, PublicKeyToken=af7e77ba04a3c166, processorArchitecture=MSIL">
+      <HintPath>..\packages\DSInternals.Replication.4.14.0\lib\net472\DSInternals.Replication.dll</HintPath>
+    </Reference>
+    <Reference Include="DSInternals.Replication.Model, Version=4.14.0.0, Culture=neutral, PublicKeyToken=af7e77ba04a3c166, processorArchitecture=MSIL">
+      <HintPath>..\packages\DSInternals.Replication.4.14.0\lib\net472\DSInternals.Replication.Model.dll</HintPath>
+    </Reference>
+    <Reference Include="DSInternals.SAM, Version=4.14.0.0, Culture=neutral, PublicKeyToken=af7e77ba04a3c166, processorArchitecture=MSIL">
+      <HintPath>..\packages\DSInternals.SAM.4.14.0\lib\net472\DSInternals.SAM.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=9.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.9.0.2\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -157,7 +163,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="FodyWeavers.xml" />
-    <Content Include="NativeMethods.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.6.9.2\build\Fody.targets" Condition="Exists('..\packages\Fody.6.9.2\build\Fody.targets')" />

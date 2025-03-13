@@ -54,9 +54,12 @@ namespace SynerCommAuditTool.Client
         public Group[] Groups { get; private set; }
 
 
-        public Customer(string name)
+        public Customer()
         {
-            this.Name = name;
+            DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.Domain);
+            Domain adDomain = Domain.GetDomain(domainContext);
+
+            this.Name = adDomain.Name;
             this.PullDate = DateTime.Now.ToString("MM/dd/yyyy");
         }
 
@@ -131,11 +134,15 @@ namespace SynerCommAuditTool.Client
             return (first, last);
         }
 
-        public void EnumerateDomain(String domain, bool verbose)
+        public void EnumerateDomain(bool verbose)
         {
             Console.WriteLine("[+] Starting enumeration");
 
+            String domain = this.Name;
+
             String LdapString = GetLdapString(domain);
+
+            Console.WriteLine($"LDAP String: {LdapString}");
 
             Console.WriteLine("[+] Connecting to LDAP");
 
