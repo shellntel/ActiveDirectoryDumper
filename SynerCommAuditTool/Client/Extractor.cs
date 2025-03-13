@@ -1,7 +1,10 @@
-﻿using DSInternals.Replication;
+﻿using DSInternals.Common.Data;
+using DSInternals.Replication;
 using System;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
+using System.Runtime.Remoting.Messaging;
+using System.Security.Principal;
 
 namespace SynerCommAuditTool.Client
 {
@@ -22,6 +25,19 @@ namespace SynerCommAuditTool.Client
             contextString += endString;
 
             return contextString;
+        }
+
+        private String GetAccountRID(DSAccount account)
+        {
+            SecurityIdentifier sid = account.Sid;
+            if (sid == null)
+            {
+                return "";
+            }
+            String[] sidSplit = sid.ToString().Split('-');
+            String rid = sidSplit[sidSplit.Length - 1];
+
+            return rid;
         }
 
 
@@ -51,6 +67,7 @@ namespace SynerCommAuditTool.Client
                 {
                     String lmHash = "aad3b435b51404eeaad3b435b51404ee";
                     String ntHash = "";
+                    String rid = this.GetAccountRID(account);
 
                     if (account.LMHash != null && account.LMHash.Length > 0)
                     {
@@ -60,11 +77,11 @@ namespace SynerCommAuditTool.Client
                     {
                         ntHash = BitConverter.ToString(account.NTHash).Replace("-", "").ToLower();
                     }
-                    writetext.WriteLine($"{account.LogonName}:{account.PrimaryGroupId}:{lmHash}:{ntHash}:::");
+                    writetext.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}:::");
 
                     if (verbose)
                     {
-                        Console.WriteLine($"{account.LogonName}:{account.PrimaryGroupId}:{lmHash}:{ntHash}:::");
+                        Console.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}:::");
                     }
                 }
             }
