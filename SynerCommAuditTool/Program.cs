@@ -3,7 +3,6 @@ using SynerCommAuditTool.Client;
 using SynerCommAuditTool.Util;
 using System;
 using System.IO;
-using System.Text.Json;
 
 namespace SynerCommAuditTool
 {

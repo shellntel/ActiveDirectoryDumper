@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
-using System.IO.Compression;
 using System.Security.Principal;
 
 namespace SynerCommAuditTool.Client

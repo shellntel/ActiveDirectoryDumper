@@ -1,22 +1,14 @@
-﻿using DSInternals.Common.Data;
-using DSInternals.Replication;
-using DSInternals.Replication.Model;
+﻿using DSInternals.Replication;
 using System;
-using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SynerCommAuditTool.Client
 {
     public class Extractor
     {
-         private String GetNamingContext(String domain)
-         {
+        private String GetNamingContext(String domain)
+        {
             string[] domainFqdn = domain.Split('.');
 
             String endString = $"dc={domainFqdn[domainFqdn.Length - 1]}";
