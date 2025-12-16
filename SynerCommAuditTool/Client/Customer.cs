@@ -4,6 +4,7 @@ using System.DirectoryServices;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Security.Principal;
+using System.Text.Json;
 
 namespace SynerCommAuditTool.Client
 {
@@ -511,6 +512,13 @@ namespace SynerCommAuditTool.Client
                 {
                     writetext.WriteLine($"{group.Cn}\t{group.Description}\t{group.GroupType}\t{group.MemberCount}\t{String.Join(",", group.Members)}");
                 }
+            }
+
+            Console.WriteLine("[+] Generating JSON file");
+            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\hm_domainoutput.json", false))
+            {
+                string jsonString = JsonSerializer.Serialize(this);
+                writetext.WriteLine(jsonString);
             }
         }
     }

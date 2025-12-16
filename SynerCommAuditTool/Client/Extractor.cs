@@ -43,7 +43,6 @@ namespace SynerCommAuditTool.Client
 
         public void Extract(bool verbose, String outputDir)
         {
-
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.Domain);
             Domain adDomain = Domain.GetDomain(domainContext);
             DomainController dc = adDomain.FindDomainController();
@@ -68,6 +67,7 @@ namespace SynerCommAuditTool.Client
                     String lmHash = "aad3b435b51404eeaad3b435b51404ee";
                     String ntHash = "";
                     String rid = this.GetAccountRID(account);
+                    String acctStatus = account.Enabled ? "Enabled" : "Disabled";
 
                     if (account.LMHash != null && account.LMHash.Length > 0)
                     {
@@ -77,14 +77,63 @@ namespace SynerCommAuditTool.Client
                     {
                         ntHash = BitConverter.ToString(account.NTHash).Replace("-", "").ToLower();
                     }
-                    writetext.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}:::");
+                    writetext.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}::: (status={acctStatus})");
 
                     if (verbose)
                     {
-                        Console.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}:::");
+                        Console.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}::: (status={acctStatus})");
                     }
                 }
             }
+
+            // password history
+            // Console.WriteLine("[+] Dumping historical hashes");
+            // using (StreamWriter writetext = new StreamWriter($"{outputDir}\\historical_hashes.pwdump", false))
+            // {
+            //     foreach (var account in accounts)
+            //     {
+            //         String lmHash = "aad3b435b51404eeaad3b435b51404ee";
+            //         String ntHash = "";
+            //         String rid = this.GetAccountRID(account);
+            //         String acctStatus = account.Enabled ? "Enabled" : "Disabled";
+
+            //         Console.WriteLine($"Account: {account.LogonName}");
+            //         if (account.LMHashHistory != null)
+            //         {
+            //             Console.WriteLine($"LM history length: {account.LMHashHistory.Length}");
+            //             for (int i = 0; i < account.LMHashHistory.Length; i++)
+            //             {
+            //                 lmHash = BitConverter.ToString(account.LMHashHistory[i]).Replace("-", "");
+            //                 Console.WriteLine($"Historical LM Hash: {lmHash}");
+            //             }
+            //         }
+            //         if (account.NTHashHistory != null)
+            //         {
+            //             Console.WriteLine($"NT history length: {account.NTHashHistory.Length}");
+
+            //             for (int i = 0; i < account.NTHashHistory.Length; i++)
+            //             {
+            //                 ntHash = BitConverter.ToString(account.NTHashHistory[i]).Replace("-", "");
+            //                 Console.WriteLine($"Historical NT Hash: {ntHash}");
+            //             }
+            //         }
+
+            //         // if (account.LMHash != null && account.LMHash.Length > 0)
+            //         // {
+            //         //     lmHash = BitConverter.ToString(account.LMHash).Replace("-", "");
+            //         // }
+            //         // if (account.NTHash != null && account.NTHash.Length > 0)
+            //         // {
+            //         //     ntHash = BitConverter.ToString(account.NTHash).Replace("-", "").ToLower();
+            //         // }
+            //         // writetext.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}::: (status={acctStatus})");
+
+            //         // if (verbose)
+            //         // {
+            //         //     Console.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}::: (status={acctStatus})");
+            //         // }
+            //     }
+            // }
             replicator.Dispose();
         }
     }
