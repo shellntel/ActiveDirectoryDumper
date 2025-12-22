@@ -1,8 +1,10 @@
 ﻿using DSInternals.Common.Data;
 using DSInternals.Replication;
 using System;
+using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
+using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using System.Security.Principal;
 
@@ -41,7 +43,7 @@ namespace SynerCommAuditTool.Client
         }
 
 
-        public void Extract(bool verbose, String outputDir)
+        public void Extract(bool verbose, String outputDir, Customer customer)
         {
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.Domain);
             Domain adDomain = Domain.GetDomain(domainContext);
@@ -59,6 +61,8 @@ namespace SynerCommAuditTool.Client
             {
                 accounts = replicator.GetAccounts(contextString);
             }
+
+            List<User> users = new List<User>(customer.Users);
 
             using (StreamWriter writetext = new StreamWriter($"{outputDir}\\hashes.pwdump", false))
             {
@@ -83,57 +87,72 @@ namespace SynerCommAuditTool.Client
                     {
                         Console.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}::: (status={acctStatus})");
                     }
+
+                    User user = users.Find(u => u.SamAccountName == account.SamAccountName);
+
+                    if (user != null)
+                    {
+                        user.NTLMHash = $"{lmHash}:{ntHash}";
+                        user.Rid = rid;
+                        user.LogonName = account.LogonName;
+                    }
                 }
             }
 
             // password history
-            // Console.WriteLine("[+] Dumping historical hashes");
-            // using (StreamWriter writetext = new StreamWriter($"{outputDir}\\historical_hashes.pwdump", false))
-            // {
-            //     foreach (var account in accounts)
-            //     {
-            //         String lmHash = "aad3b435b51404eeaad3b435b51404ee";
-            //         String ntHash = "";
-            //         String rid = this.GetAccountRID(account);
-            //         String acctStatus = account.Enabled ? "Enabled" : "Disabled";
+            Console.WriteLine("[+] Dumping historical hashes");
+            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\historical_hashes.pwdump", false))
+            {
+                foreach (var account in accounts)
+                {
+                    String lmHash = "aad3b435b51404eeaad3b435b51404ee";
+                    String ntHash = "";
+                    String rid = this.GetAccountRID(account);
 
-            //         Console.WriteLine($"Account: {account.LogonName}");
-            //         if (account.LMHashHistory != null)
-            //         {
-            //             Console.WriteLine($"LM history length: {account.LMHashHistory.Length}");
-            //             for (int i = 0; i < account.LMHashHistory.Length; i++)
-            //             {
-            //                 lmHash = BitConverter.ToString(account.LMHashHistory[i]).Replace("-", "");
-            //                 Console.WriteLine($"Historical LM Hash: {lmHash}");
-            //             }
-            //         }
-            //         if (account.NTHashHistory != null)
-            //         {
-            //             Console.WriteLine($"NT history length: {account.NTHashHistory.Length}");
+                    Console.WriteLine($"Account: {account.LogonName}");
+                    if (account.LMHashHistory != null)
+                    {
+                        Console.WriteLine($"LM history length: {account.LMHashHistory.Length}");
+                        for (int i = 0; i < account.LMHashHistory.Length; i++)
+                        {
+                            lmHash = BitConverter.ToString(account.LMHashHistory[i]).Replace("-", "");
+                            Console.WriteLine($"Historical LM Hash: {lmHash}");
+                        }
+                    }
 
-            //             for (int i = 0; i < account.NTHashHistory.Length; i++)
-            //             {
-            //                 ntHash = BitConverter.ToString(account.NTHashHistory[i]).Replace("-", "");
-            //                 Console.WriteLine($"Historical NT Hash: {ntHash}");
-            //             }
-            //         }
+                    if (account.NTHashHistory != null)
+                    {
+                        Console.WriteLine($"NT history length: {account.NTHashHistory.Length}");
 
-            //         // if (account.LMHash != null && account.LMHash.Length > 0)
-            //         // {
-            //         //     lmHash = BitConverter.ToString(account.LMHash).Replace("-", "");
-            //         // }
-            //         // if (account.NTHash != null && account.NTHash.Length > 0)
-            //         // {
-            //         //     ntHash = BitConverter.ToString(account.NTHash).Replace("-", "").ToLower();
-            //         // }
-            //         // writetext.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}::: (status={acctStatus})");
+                        List<String> ntHistory = new List<String>();
 
-            //         // if (verbose)
-            //         // {
-            //         //     Console.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}::: (status={acctStatus})");
-            //         // }
-            //     }
-            // }
+                        for (int i = 0; i < account.NTHashHistory.Length; i++)
+                        {
+                            if (i == 0)
+                            {
+                                // skip first hash which is the current
+                                continue;
+                            }
+                            ntHash = BitConverter.ToString(account.NTHashHistory[i]).Replace("-", "");
+                            Console.WriteLine($"Historical NT Hash: {ntHash}");
+
+                            ntHistory.Add(ntHash);
+
+                            writetext.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}:::");
+                            if (verbose)
+                            {
+                                Console.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}:::");
+                            }
+                        }
+
+                        User user = users.Find(u => u.SamAccountName == account.SamAccountName);
+                        if (user != null)
+                        {
+                            user.HistoricalNTHashes = ntHistory.ToArray();
+                        }
+                    }
+                }
+            }
             replicator.Dispose();
         }
     }

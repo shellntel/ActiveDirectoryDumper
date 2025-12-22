@@ -44,8 +44,10 @@ namespace SynerCommAuditTool
 
                     Console.WriteLine("[+] Performing hash collection");
                     Extractor extractor = new Extractor();
-                    extractor.Extract(o.Verbose, outputDir);
+                    extractor.Extract(o.Verbose, outputDir, customer);
 
+
+                    customer.GenerateFiles(outputDir);
                     Console.WriteLine("[+] Generating zip file");
                     GenerateZip.Create(outputDir);
                 }
@@ -55,7 +57,8 @@ namespace SynerCommAuditTool
                     {
                         Console.WriteLine("[+] Performing hash collection");
                         Extractor extractor = new Extractor();
-                        extractor.Extract(o.Verbose, outputDir);
+                        Customer customer = new Customer();
+                        extractor.Extract(o.Verbose, outputDir, customer);
                         Console.WriteLine($"[+] Hashes written to {outputDir}/hashes.pwdump");
                     }
                     catch (Exception ex)

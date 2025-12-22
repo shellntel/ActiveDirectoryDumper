@@ -254,7 +254,7 @@ namespace SynerCommAuditTool.Client
             this.GetGroupInfo(verbose);
             this.GetPassPol(verbose);
 
-            this.GenerateCSVs(outputDir);
+            //this.GenerateCSVs(outputDir);
         }
 
         private (String, String) ParseTrustInfo(String trustDirection, String trustType)
@@ -486,7 +486,7 @@ namespace SynerCommAuditTool.Client
             directorySearcher.Dispose();
         }
 
-        public void GenerateCSVs(String outputDir)
+        public void GenerateFiles(String outputDir)
         {
             Console.WriteLine("[+] Generating CSV files");
             using (StreamWriter writetext = new StreamWriter($"{outputDir}\\policies.csv", false))

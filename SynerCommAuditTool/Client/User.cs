@@ -19,6 +19,30 @@
         public string LockoutTime { get; private set; }
         public string ObjectSid { get; private set; }
         public string Description { get; private set; }
+        private string _ntlmHash;
+        public string NTLMHash
+        {
+            get => _ntlmHash;
+            set => _ntlmHash = value;
+        }
+        private string[] _historicalNTLMHashes = new string[0];
+        public string[] HistoricalNTHashes
+        {
+            get => _historicalNTLMHashes;
+            set => _historicalNTLMHashes = value;
+        }
+        private string _rid;
+        public string Rid
+        {
+            get => _rid;
+            set => _rid = value;
+        }
+        private string _logonName; 
+        public string LogonName
+        {
+            get => _logonName;
+            set => _logonName = value;
+        }
 
         public User(
             string cn,
