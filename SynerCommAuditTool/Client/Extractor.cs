@@ -93,7 +93,6 @@ namespace SynerCommAuditTool.Client
                     if (user != null)
                     {
                         user.NTLMHash = $"{lmHash}:{ntHash}";
-                        user.Rid = rid;
                         user.LogonName = account.LogonName;
                     }
                 }

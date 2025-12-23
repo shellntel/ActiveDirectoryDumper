@@ -31,12 +31,6 @@
             get => _historicalNTLMHashes;
             set => _historicalNTLMHashes = value;
         }
-        private string _rid;
-        public string Rid
-        {
-            get => _rid;
-            set => _rid = value;
-        }
         private string _logonName; 
         public string LogonName
         {
