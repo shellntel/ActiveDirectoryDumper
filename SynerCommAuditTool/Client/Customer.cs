@@ -47,6 +47,7 @@ namespace SynerCommAuditTool.Client
         public double LockoutDuration { get; private set; }
         public double LockoutObservationWindow { get; private set; }
         public int LockoutThreshold { get; private set; }
+        public int PwdHistoryLength { get; private set; }
 
         public List<Dictionary<String, String>> DomainTrusts { get; private set; }
         public User[] Users { get; private set; }
@@ -447,7 +448,7 @@ namespace SynerCommAuditTool.Client
             directoryEntry.RefreshCache();
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=domainDNS)");
 
-            String[] passwordProps = { "maxPwdAge", "minPwdAge", "minPwdLength", "pwdProperties", "lockoutDuration", "lockoutObservationWindow", "lockoutThreshold" };
+            String[] passwordProps = { "maxPwdAge", "minPwdAge", "minPwdLength", "pwdProperties", "lockoutDuration", "lockoutObservationWindow", "lockoutThreshold", "PwdHistoryLength" };
 
             directorySearcher.PropertiesToLoad.AddRange(passwordProps);
 
@@ -472,6 +473,7 @@ namespace SynerCommAuditTool.Client
                 Console.WriteLine($"Lockout Duration: {Math.Abs(lockoutDuration.TotalMinutes)} minutes");
                 Console.WriteLine($"Lockout Time Window: Resets in {Math.Abs(lockoutTimeWindow.TotalMinutes)} minutes");
                 Console.WriteLine($"Lockout Threshold: {result.Properties["lockoutThreshold"][0]} invalid attempts");
+                Console.WriteLine($"Password History Length: {result.Properties["PwdHistoryLength"][0]}");
             }
 
             this.MinPwdAge = Math.Abs(minPwdAge.TotalDays);
@@ -481,6 +483,7 @@ namespace SynerCommAuditTool.Client
             this.LockoutDuration = Math.Abs(lockoutDuration.TotalMinutes);
             this.LockoutObservationWindow = Math.Abs(lockoutTimeWindow.TotalMinutes);
             this.LockoutThreshold = (int)result.Properties["lockoutThreshold"][0];
+            this.PwdHistoryLength =(int)result.Properties["PwdHistoryLength"][0];
 
             directoryEntry.Dispose();
             directorySearcher.Dispose();
@@ -491,8 +494,8 @@ namespace SynerCommAuditTool.Client
             Console.WriteLine("[+] Generating CSV files");
             using (StreamWriter writetext = new StreamWriter($"{outputDir}\\policies.csv", false))
             {
-                writetext.WriteLine("Name\tMinPasswordAge\tMaxPwdAge\tMinPasswordLength\tPwdProperties\tLockoutDuration\tLockoutWindow\tLockoutThreshold");
-                writetext.WriteLine($"{this.Name}\t{this.MinPasswordLength}\t{this.MaxPwdAge}\t{this.MinPasswordLength}\t{this.PwdProperties}\t{this.LockoutDuration}\t{this.LockoutObservationWindow}\t{this.LockoutThreshold}");
+                writetext.WriteLine("Name\tMinPasswordAge\tMaxPwdAge\tMinPasswordLength\tPwdProperties\tLockoutDuration\tLockoutWindow\tLockoutThreshold\tPasswordHistoryLength");
+                writetext.WriteLine($"{this.Name}\t{this.MinPasswordLength}\t{this.MaxPwdAge}\t{this.MinPasswordLength}\t{this.PwdProperties}\t{this.LockoutDuration}\t{this.LockoutObservationWindow}\t{this.LockoutThreshold}\t{this.PwdHistoryLength}");
             }
 
 
