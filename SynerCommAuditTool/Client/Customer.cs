@@ -132,6 +132,16 @@ namespace SynerCommAuditTool.Client
             return (first, last);
         }
 
+        private String[] GetDataValues(ResultPropertyValueCollection data)
+        {
+            List<String> values = new List<String>();
+            for (int i = 0;i < data.Count; i++)
+            {
+                values.Add(data[i].ToString());
+            }
+            return values.ToArray();
+        }
+
         public void EnumerateDomain(bool verbose, String outputDir)
         {
             Console.WriteLine("[+] Starting enumeration");
@@ -158,7 +168,11 @@ namespace SynerCommAuditTool.Client
                 "pwdlastset",
                 "lockouttime",
                 "objectsid",
-                "description"
+                "description",
+                "serviceprincipalname",
+                "admincount",
+                "msds-supportedencryptiontypes",
+                "msds-allowedtodelegateto"
             };
 
             directorySearcher.PropertiesToLoad.AddRange(userProperties);
@@ -188,10 +202,13 @@ namespace SynerCommAuditTool.Client
                 String whenCreated = resultPropColl["whencreated"].Count > 0 ? resultPropColl["whencreated"][0].ToString() : "";
                 String whenChanged = resultPropColl["whenchanged"].Count > 0 ? resultPropColl["whenchanged"][0].ToString() : "";
                 String lastLogon = resultPropColl["lastlogon"].Count > 0 ? this.ParseDateTime((long)resultPropColl["lastlogon"][0]) : "";
+                String adminCount = resultPropColl["admincount"].Count > 0 ? resultPropColl["admincount"][0].ToString() : "0";
+                String supportedEncryptionTypes = resultPropColl["msds-supportedencryptiontypes"].Count > 0 ? resultPropColl["msds-supportedencryptiontypes"][0].ToString() : "";
 
                 (String first, String last) = this.ParseName(name);
                 List<String> memberGroups = new List<String>();
                 int groupMemberCount = resultPropColl["memberof"].Count;
+
 
                 if (groupMemberCount > 0)
                 {
@@ -209,13 +226,20 @@ namespace SynerCommAuditTool.Client
                     objectSid = sid.ToString();
                 }
 
-                String userAccountControl = resultPropColl["useraccountcontrol"].Count > 0 ? resultPropColl["useraccountcontrol"][0].ToString() : "";
+                String rawUAC = resultPropColl["useraccountcontrol"].Count > 0 ? resultPropColl["useraccountcontrol"][0].ToString() : "";
                 String[] uacFlags = Array.Empty<string>();
 
-                if (!string.IsNullOrEmpty(userAccountControl))
+                if (!string.IsNullOrEmpty(rawUAC))
                 {
-                    uacFlags = this.ParseUacFlags(userAccountControl);
+                    uacFlags = this.ParseUacFlags(rawUAC);
                 }
+
+                ResultPropertyValueCollection servicePrincipalNames = resultPropColl["serviceprincipalname"];
+                String[] spns = this.GetDataValues(servicePrincipalNames);
+
+
+                ResultPropertyValueCollection allowedToDelegateTo = resultPropColl["msds-allowedtodelegateto"];
+                String[] delegations = this.GetDataValues(allowedToDelegateTo);
 
                 if (verbose)
                 {
@@ -236,10 +260,15 @@ namespace SynerCommAuditTool.Client
                     whenChanged,
                     lastLogon,
                     uacFlags,
+                    rawUAC,
                     pwdLastSet,
                     lockoutTime,
                     objectSid,
-                    description
+                    description,
+                    spns,
+                    adminCount,
+                    supportedEncryptionTypes,
+                    delegations
                 );
 
                 this.Users[count] = user;

@@ -110,11 +110,9 @@ namespace SynerCommAuditTool.Client
 
                     if (account.LMHashHistory != null)
                     {
-                        Console.WriteLine($"LM history length: {account.LMHashHistory.Length}");
                         for (int i = 0; i < account.LMHashHistory.Length; i++)
                         {
                             lmHash = BitConverter.ToString(account.LMHashHistory[i]).Replace("-", "").ToLower();
-                            Console.WriteLine($"Historical LM Hash: {lmHash}");
                         }
                     }
 
@@ -132,7 +130,6 @@ namespace SynerCommAuditTool.Client
                                 continue;
                             }
                             ntHash = BitConverter.ToString(account.NTHashHistory[i]).Replace("-", "").ToLower();
-                            Console.WriteLine($"Historical NT Hash: {ntHash}");
 
                             ntHistory.Add(ntHash);
 
