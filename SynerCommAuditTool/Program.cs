@@ -26,7 +26,7 @@ namespace ActiveDirectoryDumper
                 if (!CheckandInstallDeps())
                     return;
 
-                String outputDir = "SynerCommAuditTool_DomainOutput";
+                String outputDir = "ActiveDirectoryDumper_DomainOutput";
 
                 if (!Directory.Exists(outputDir))
                 {
