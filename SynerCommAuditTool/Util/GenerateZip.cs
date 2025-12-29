@@ -2,7 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 
-namespace SynerCommAuditTool.Util
+namespace ActiveDirectoryDumper.Util
 {
     public class GenerateZip
     {

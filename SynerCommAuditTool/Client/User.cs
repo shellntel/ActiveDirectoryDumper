@@ -1,4 +1,4 @@
-﻿namespace SynerCommAuditTool.Client
+﻿namespace ActiveDirectoryDumper.Client
 {
     public class User
     {

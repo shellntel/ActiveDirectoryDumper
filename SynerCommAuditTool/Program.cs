@@ -1,12 +1,12 @@
 ﻿using CommandLine;
-using SynerCommAuditTool.Client;
-using SynerCommAuditTool.Util;
+using ActiveDirectoryDumper.Client;
+using ActiveDirectoryDumper.Util;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace SynerCommAuditTool
+namespace ActiveDirectoryDumper
 {
     internal class Program
     {

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using System.Security.Principal;
 
-namespace SynerCommAuditTool.Client
+namespace ActiveDirectoryDumper.Client
 {
     public class Extractor
     {

@@ -6,7 +6,7 @@ using System.IO;
 using System.Security.Principal;
 using System.Text.Json;
 
-namespace SynerCommAuditTool.Client
+namespace ActiveDirectoryDumper.Client
 {
     enum UacFlags : uint
     {

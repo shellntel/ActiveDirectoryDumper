@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SynerCommAuditTool.Client
+namespace ActiveDirectoryDumper.Client
 {
     public class Group
     {
