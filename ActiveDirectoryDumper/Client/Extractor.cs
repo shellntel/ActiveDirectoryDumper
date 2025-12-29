@@ -118,8 +118,6 @@ namespace ActiveDirectoryDumper.Client
 
                     if (account.NTHashHistory != null)
                     {
-                        Console.WriteLine($"NT history length: {account.NTHashHistory.Length}");
-
                         List<String> ntHistory = new List<String>();
 
                         for (int i = 0; i < account.NTHashHistory.Length; i++)
