@@ -131,10 +131,10 @@ namespace ActiveDirectoryDumper.Client
 
                             ntHistory.Add(ntHash);
 
-                            writetext.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}:::");
+                            writetext.WriteLine($"{account.LogonName}_{i}:{rid}:{lmHash}:{ntHash}:::");
                             if (verbose)
                             {
-                                Console.WriteLine($"{account.LogonName}:{rid}:{lmHash}:{ntHash}:::");
+                                Console.WriteLine($"{account.LogonName}_{i}:{rid}:{lmHash}:{ntHash}:::");
                             }
                         }
 

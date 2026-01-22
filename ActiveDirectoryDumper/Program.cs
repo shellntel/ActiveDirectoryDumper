@@ -21,6 +21,19 @@ namespace ActiveDirectoryDumper
 
         static void Main(string[] args)
         {
+            Console.WriteLine(@"
+   ░███       ░███    ░███████   
+  ░██░██     ░██░██   ░██   ░██  
+ ░██  ░██   ░██  ░██  ░██    ░██ 
+░█████████ ░█████████ ░██    ░██ 
+░██    ░██ ░██    ░██ ░██    ░██ 
+░██    ░██ ░██    ░██ ░██   ░██  
+░██    ░██ ░██    ░██ ░███████   
+                                 
+");
+
+            Console.WriteLine("by Dylan Reuter - 0xBU117\n");
+
             CommandLine.Parser.Default.ParseArguments<Options>(args).WithParsed<Options>(o =>
             {
                 if (!CheckandInstallDeps())
@@ -38,9 +51,6 @@ namespace ActiveDirectoryDumper
                     Customer customer = new Customer();
                     customer.EnumerateDomain(o.Verbose, outputDir);
 
-                    //string jsonString = JsonSerializer.Serialize(customer);
-                    //if (o.Verbose)
-                    //    Console.WriteLine($"{jsonString}");
 
                     Console.WriteLine("[+] Performing hash collection");
                     Extractor extractor = new Extractor();

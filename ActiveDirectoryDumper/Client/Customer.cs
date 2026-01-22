@@ -154,6 +154,8 @@ namespace ActiveDirectoryDumper.Client
             directoryEntry.RefreshCache();
 
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(&(objectCategory=person)(objectClass=user))");
+            directorySearcher.PageSize = 1000;
+
             String[] userProperties = new string[] {
                 "cn",
                 "name",
@@ -416,6 +418,7 @@ namespace ActiveDirectoryDumper.Client
             DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
             directoryEntry.RefreshCache();
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=group)");
+            directorySearcher.PageSize = 1000;
 
             String[] groupFields = { "cn", "description", "grouptype", "member" };
 
