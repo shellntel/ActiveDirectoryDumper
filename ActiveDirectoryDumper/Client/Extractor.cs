@@ -122,11 +122,6 @@ namespace ActiveDirectoryDumper.Client
 
                         for (int i = 0; i < account.NTHashHistory.Length; i++)
                         {
-                            if (i == 0)
-                            {
-                                // skip first hash which is the current
-                                continue;
-                            }
                             ntHash = BitConverter.ToString(account.NTHashHistory[i]).Replace("-", "").ToLower();
 
                             ntHistory.Add(ntHash);
