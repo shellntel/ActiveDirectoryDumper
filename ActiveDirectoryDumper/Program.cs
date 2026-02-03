@@ -49,7 +49,7 @@ namespace ActiveDirectoryDumper
                 if (!o.Dump)
                 {
                     Customer customer = new Customer();
-                    customer.EnumerateDomain(o.Verbose, outputDir);
+                    customer.EnumerateDomain(outputDir);
 
 
                     Console.WriteLine("[+] Performing hash collection");

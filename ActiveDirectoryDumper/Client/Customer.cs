@@ -53,6 +53,7 @@ namespace ActiveDirectoryDumper.Client
         public User[] Users { get; private set; }
 
         public Group[] Groups { get; private set; }
+        public Computer[] Computers { get; private set; }
 
 
         public Customer()
@@ -142,15 +143,24 @@ namespace ActiveDirectoryDumper.Client
             return values.ToArray();
         }
 
-        public void EnumerateDomain(bool verbose, String outputDir)
+        public void EnumerateDomain(String outputDir)
         {
             Console.WriteLine("[+] Starting enumeration");
 
-            String LdapString = GetLdapString();
+            String ldapString = GetLdapString();
 
             Console.WriteLine("[+] Connecting to LDAP");
 
-            DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
+            this.GetDomainUsers(ldapString);
+            this.GetDomainComputers(ldapString);
+            this.GetDomainTrusts(ldapString);
+            this.GetGroupInfo(ldapString);
+            this.GetPassPol(ldapString);
+        }
+
+        private void GetDomainUsers(string ldapString)
+        {
+            DirectoryEntry directoryEntry = new DirectoryEntry(ldapString);
             directoryEntry.RefreshCache();
 
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(&(objectCategory=person)(objectClass=user))");
@@ -243,11 +253,6 @@ namespace ActiveDirectoryDumper.Client
                 ResultPropertyValueCollection allowedToDelegateTo = resultPropColl["msds-allowedtodelegateto"];
                 String[] delegations = this.GetDataValues(allowedToDelegateTo);
 
-                if (verbose)
-                {
-                    Console.WriteLine($"CN: {cn}, SamAccountName: {samAccountName}, Group Count: {groupMemberCount}, UAC Flags: [{String.Join(",", uacFlags)}], Password Last Set: {pwdLastSet}, SID: {objectSid}, Description: {description}");
-                }
-
                 User user = new User(
                     cn,
                     name,
@@ -281,12 +286,6 @@ namespace ActiveDirectoryDumper.Client
             results.Dispose();
             directoryEntry.Dispose();
             directorySearcher.Dispose();
-
-            this.GetDomainTrusts(verbose);
-            this.GetGroupInfo(verbose);
-            this.GetPassPol(verbose);
-
-            //this.GenerateCSVs(outputDir);
         }
 
         private (String, String) ParseTrustInfo(String trustDirection, String trustType)
@@ -332,13 +331,11 @@ namespace ActiveDirectoryDumper.Client
             return (parsedTrustDirection, parsedTrustType);
         }
 
-        public void GetDomainTrusts(bool verbose)
+        public void GetDomainTrusts(string ldapString)
         {
             Console.WriteLine("[+] Finding Domain Trusts");
 
-            String LdapString = GetLdapString();
-
-            DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
+            DirectoryEntry directoryEntry = new DirectoryEntry(ldapString);
             directoryEntry.RefreshCache();
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=trustedDomain)");
 
@@ -364,13 +361,6 @@ namespace ActiveDirectoryDumper.Client
                 String trustType = resultPropColl["trustType"].Count > 0 ? resultPropColl["trustType"][0].ToString() : "";
 
                 (String parsedTrustDirection, String parsedTrustType) = this.ParseTrustInfo(trustDirection, trustType);
-
-                if (verbose)
-                {
-                    Console.WriteLine($"Trust: {trustPartner}");
-                    Console.WriteLine($"Trust Direction: {parsedTrustDirection}");
-                    Console.WriteLine($"Trust Type: {parsedTrustType}");
-                }
 
                 Dictionary<String, String> trust = new Dictionary<String, String>();
 
@@ -409,13 +399,11 @@ namespace ActiveDirectoryDumper.Client
             return $"{scopeType} {securityType} Group";
         }
 
-        public void GetGroupInfo(bool verbose)
+        public void GetGroupInfo(string ldapString)
         {
             Console.WriteLine("[+] Getting Domain Groups");
 
-            String LdapString = GetLdapString();
-
-            DirectoryEntry directoryEntry = new DirectoryEntry(LdapString);
+            DirectoryEntry directoryEntry = new DirectoryEntry(ldapString);
             directoryEntry.RefreshCache();
             DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(objectClass=group)");
             directorySearcher.PageSize = 1000;
@@ -444,11 +432,6 @@ namespace ActiveDirectoryDumper.Client
                 int memberCount = resultProps["member"].Count;
                 String parsedGroupType = this.ParseGroupType(groupType);
 
-                if (verbose)
-                {
-                    Console.WriteLine($"CN: {cn}, Description: {description}, Group Type: {parsedGroupType}, Member Count: {memberCount}");
-                }
-
                 List<String> groupMembers = new List<string>();
                 foreach (String m in resultProps["member"])
                 {
@@ -462,17 +445,15 @@ namespace ActiveDirectoryDumper.Client
             }
         }
 
-        public void GetPassPol(bool verbose)
+        public void GetPassPol(string ldapString)
         {
-            String LdapString = GetLdapString();
-
             Console.WriteLine("[+] Getting password policy");
 
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.Domain);
             Domain adDomain = Domain.GetDomain(domainContext);
             DomainController dc = adDomain.FindDomainController();
 
-            String domainString = LdapString.Substring(7);
+            String domainString = ldapString.Substring(7);
 
             String ldapConnectionString = $"LDAP://{dc}/{domainString}";
 
@@ -496,17 +477,14 @@ namespace ActiveDirectoryDumper.Client
             TimeSpan lockoutDuration = TimeSpan.FromTicks((long)result.Properties["lockoutDuration"][0]);
             TimeSpan lockoutTimeWindow = TimeSpan.FromTicks((long)result.Properties["lockoutObservationWindow"][0]);
 
-            if (verbose)
-            {
-                Console.WriteLine($"Min Password Age: {Math.Abs(minPwdAge.TotalDays)}");
-                Console.WriteLine($"Max Password Age: {Math.Abs(maxPwdAge.TotalDays)}");
-                Console.WriteLine($"Min Password Length: {result.Properties["minPwdLength"][0]}");
-                Console.WriteLine($"Password Properties: {result.Properties["pwdProperties"][0]}");
-                Console.WriteLine($"Lockout Duration: {Math.Abs(lockoutDuration.TotalMinutes)} minutes");
-                Console.WriteLine($"Lockout Time Window: Resets in {Math.Abs(lockoutTimeWindow.TotalMinutes)} minutes");
-                Console.WriteLine($"Lockout Threshold: {result.Properties["lockoutThreshold"][0]} invalid attempts");
-                Console.WriteLine($"Password History Length: {result.Properties["PwdHistoryLength"][0]}");
-            }
+            Console.WriteLine($"\tMin Password Age: {Math.Abs(minPwdAge.TotalDays)}");
+            Console.WriteLine($"\tMax Password Age: {Math.Abs(maxPwdAge.TotalDays)}");
+            Console.WriteLine($"\tMin Password Length: {result.Properties["minPwdLength"][0]}");
+            Console.WriteLine($"\tPassword Properties: {result.Properties["pwdProperties"][0]}");
+            Console.WriteLine($"\tLockout Duration: {Math.Abs(lockoutDuration.TotalMinutes)} minutes");
+            Console.WriteLine($"\tLockout Time Window: Resets in {Math.Abs(lockoutTimeWindow.TotalMinutes)} minutes");
+            Console.WriteLine($"\tLockout Threshold: {result.Properties["lockoutThreshold"][0]} invalid attempts");
+            Console.WriteLine($"\tPassword History Length: {result.Properties["PwdHistoryLength"][0]}");
 
             this.MinPwdAge = Math.Abs(minPwdAge.TotalDays);
             this.MaxPwdAge = Math.Abs(maxPwdAge.TotalDays);
@@ -523,31 +501,32 @@ namespace ActiveDirectoryDumper.Client
 
         public void GenerateFiles(String outputDir)
         {
-            Console.WriteLine("[+] Generating CSV files");
-            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\policies.csv", false))
-            {
-                writetext.WriteLine("Name\tMinPasswordAge\tMaxPwdAge\tMinPasswordLength\tPwdProperties\tLockoutDuration\tLockoutWindow\tLockoutThreshold\tPasswordHistoryLength");
-                writetext.WriteLine($"{this.Name}\t{this.MinPasswordLength}\t{this.MaxPwdAge}\t{this.MinPasswordLength}\t{this.PwdProperties}\t{this.LockoutDuration}\t{this.LockoutObservationWindow}\t{this.LockoutThreshold}\t{this.PwdHistoryLength}");
-            }
+            // DEPRECATING 02/03/26
+            //Console.WriteLine("[+] Generating CSV files");
+            // using (StreamWriter writetext = new StreamWriter($"{outputDir}\\policies.csv", false))
+            // {
+            //    writetext.WriteLine("Name\tMinPasswordAge\tMaxPwdAge\tMinPasswordLength\tPwdProperties\tLockoutDuration\tLockoutWindow\tLockoutThreshold\tPasswordHistoryLength");
+            //    writetext.WriteLine($"{this.Name}\t{this.MinPasswordLength}\t{this.MaxPwdAge}\t{this.MinPasswordLength}\t{this.PwdProperties}\t{this.LockoutDuration}\t{this.LockoutObservationWindow}\t{this.LockoutThreshold}\t{this.PwdHistoryLength}");
+            // }
 
 
-            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\users.csv", false))
-            {
-                writetext.WriteLine("Name\tFirst\tLast\tSamAccountName\tGroupMemberCount\tMemberOf\tDisplayName\tPrimaryGroupID\tWhenCreated\tWhenChanged\tLastLogon\tUACFlags\tPasswordLastSet\tLockoutTime\tSID\tDescription");
-                foreach (User user in this.Users)
-                {
-                    writetext.WriteLine($"{user.Cn}\t{user.First}\t{user.Last}\t{user.SamAccountName}\t{user.GroupMemberCount}\t{String.Join(",", user.MemberOf)}\t{user.DisplayName}\t{user.PrimaryGroupId}\t{user.WhenCreated}\t{user.WhenChanged}\t{user.LastLogon}\t{String.Join(",", user.UserAccountControl)}\t{user.PwdLastSet}\t{user.LockoutTime}\t{user.ObjectSid}\t{user.Description}");
-                }
-            }
+            // using (StreamWriter writetext = new StreamWriter($"{outputDir}\\users.csv", false))
+            // {
+            //    writetext.WriteLine("Name\tFirst\tLast\tSamAccountName\tGroupMemberCount\tMemberOf\tDisplayName\tPrimaryGroupID\tWhenCreated\tWhenChanged\tLastLogon\tUACFlags\tPasswordLastSet\tLockoutTime\tSID\tDescription");
+            //    foreach (User user in this.Users)
+            //    {
+            //        writetext.WriteLine($"{user.Cn}\t{user.First}\t{user.Last}\t{user.SamAccountName}\t{user.GroupMemberCount}\t{String.Join(",", user.MemberOf)}\t{user.DisplayName}\t{user.PrimaryGroupId}\t{user.WhenCreated}\t{user.WhenChanged}\t{user.LastLogon}\t{String.Join(",", user.UserAccountControl)}\t{user.PwdLastSet}\t{user.LockoutTime}\t{user.ObjectSid}\t{user.Description}");
+            //    }
+            // }
 
-            using (StreamWriter writetext = new StreamWriter($"{outputDir}\\groups.csv", false))
-            {
-                writetext.WriteLine("Name\tDescription\tGroupType\tMemberCount\tMembers");
-                foreach (Group group in this.Groups)
-                {
-                    writetext.WriteLine($"{group.Cn}\t{group.Description}\t{group.GroupType}\t{group.MemberCount}\t{String.Join(",", group.Members)}");
-                }
-            }
+            // using (StreamWriter writetext = new StreamWriter($"{outputDir}\\groups.csv", false))
+            // {
+            //    writetext.WriteLine("Name\tDescription\tGroupType\tMemberCount\tMembers");
+            //    foreach (Group group in this.Groups)
+            //    {
+            //        writetext.WriteLine($"{group.Cn}\t{group.Description}\t{group.GroupType}\t{group.MemberCount}\t{String.Join(",", group.Members)}");
+            //    }
+            // }
 
             Console.WriteLine("[+] Generating JSON file");
             using (StreamWriter writetext = new StreamWriter($"{outputDir}\\hm_domainoutput.json", false))
@@ -555,6 +534,88 @@ namespace ActiveDirectoryDumper.Client
                 string jsonString = JsonSerializer.Serialize(this);
                 writetext.WriteLine(jsonString);
             }
+        }
+
+        public void GetDomainComputers(string ldapString)
+        {
+            DirectoryEntry directoryEntry = new DirectoryEntry(ldapString);
+            directoryEntry.RefreshCache();
+
+            DirectorySearcher directorySearcher = new DirectorySearcher(directoryEntry, "(&(objectClass=computer)(objectClass=user))");
+            directorySearcher.PageSize = 1000;
+
+            String[] computerProperties = new string[] {
+                "cn",
+                "samaccountname",
+                "dnshostname",
+                "operatingsystem",
+                "operatingsystemservicepack",
+                "operatingsystemversion",
+                "lastlogon",
+                "useraccountcontrol",
+                "whencreated",
+                "sid",
+                "description"
+            };
+
+            directorySearcher.PropertiesToLoad.AddRange(computerProperties);
+
+            SearchResultCollection results = directorySearcher.FindAll();
+
+            Console.WriteLine($"[*] Found {results.Count} computers!");
+
+            this.Computers = new Computer[results.Count];
+
+            int count = 0;
+            foreach (SearchResult result in results)
+            {
+                ResultPropertyCollection resultPropColl = result.Properties;
+
+                String cn = resultPropColl["cn"].Count > 0 ? resultPropColl["cn"][0].ToString() : "";
+                String samAccountName = resultPropColl["samaccountname"].Count > 0 ? resultPropColl["samaccountname"][0].ToString() : "";
+                String dnsHostName = resultPropColl["dnshostname"].Count > 0 ? resultPropColl["dnshostname"][0].ToString() : "";
+                String os = resultPropColl["operatingsystem"].Count > 0 ? resultPropColl["operatingsystem"][0].ToString() : "";
+                String osServicePack = resultPropColl["operatingsystemservicepack"].Count > 0 ? resultPropColl["operatingsystemservicepack"][0].ToString() : "";
+                String osVersion = resultPropColl["operatingsystemversion"].Count > 0 ? resultPropColl["operatingsystemversion"][0].ToString() : "";
+                String lastLogon = resultPropColl["lastlogon"].Count > 0 ? this.ParseDateTime((long)resultPropColl["lastlogon"][0]) : "";
+                String rawUAC = resultPropColl["useraccountcontrol"].Count > 0 ? resultPropColl["useraccountcontrol"][0].ToString() : "";
+                String[] uacFlags = Array.Empty<string>();
+
+                if (!string.IsNullOrEmpty(rawUAC))
+                {
+                    uacFlags = this.ParseUacFlags(rawUAC);
+                }
+                String whenCreated = resultPropColl["whencreated"].Count > 0 ? resultPropColl["whencreated"][0].ToString() : "";
+                String sid = "";
+
+                if (resultPropColl["sid"].Count > 0)
+                {
+                    SecurityIdentifier rawSid = new SecurityIdentifier((byte[])resultPropColl["sid"][0], 0);
+                    sid = rawSid.ToString();
+                }   
+                String description = resultPropColl["description"].Count > 0 ? resultPropColl["description"][0].ToString() : "";
+
+                Computer computer = new Computer(
+                    cn,
+                    samAccountName,
+                    dnsHostName,
+                    os,
+                    osServicePack,
+                    osVersion,
+                    lastLogon,
+                    uacFlags,
+                    whenCreated,
+                    sid,
+                    description
+                );
+
+                this.Computers[count] = computer;
+                count++;
+            }              
+
+            results.Dispose();
+            directoryEntry.Dispose();
+            directorySearcher.Dispose();
         }
     }
 }

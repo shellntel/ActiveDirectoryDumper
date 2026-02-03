@@ -63,6 +63,7 @@ namespace ActiveDirectoryDumper.Client
             }
 
             List<User> users = new List<User>(customer.Users);
+            List<Computer> computers = new List<Computer>(customer.Computers);
 
             using (StreamWriter writetext = new StreamWriter($"{outputDir}\\hashes.pwdump", false))
             {
@@ -89,11 +90,17 @@ namespace ActiveDirectoryDumper.Client
                     }
 
                     User user = users.Find(u => u.SamAccountName == account.SamAccountName);
+                    Computer computer = computers.Find(c => c.SamAccountName == account.SamAccountName);
 
                     if (user != null)
                     {
                         user.NTLMHash = $"{lmHash}:{ntHash}";
                         user.LogonName = account.LogonName;
+                    }
+
+                    if (computer != null)
+                    {
+                        computer.NTLMHash = $"{lmHash}:{ntHash}";
                     }
                 }
             }
@@ -127,10 +134,6 @@ namespace ActiveDirectoryDumper.Client
                             ntHistory.Add(ntHash);
 
                             writetext.WriteLine($"{account.LogonName}_{i}:{rid}:{lmHash}:{ntHash}:::");
-                            if (verbose)
-                            {
-                                Console.WriteLine($"{account.LogonName}_{i}:{rid}:{lmHash}:{ntHash}:::");
-                            }
                         }
 
                         User user = users.Find(u => u.SamAccountName == account.SamAccountName);

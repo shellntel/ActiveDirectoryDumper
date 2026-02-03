@@ -165,6 +165,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Client\Computer.cs" />
     <Compile Include="Client\Customer.cs" />
     <Compile Include="Client\Extractor.cs" />
     <Compile Include="Client\Group.cs" />
