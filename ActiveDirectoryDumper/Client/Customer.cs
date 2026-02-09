@@ -477,15 +477,6 @@ namespace ActiveDirectoryDumper.Client
             TimeSpan lockoutDuration = TimeSpan.FromTicks((long)result.Properties["lockoutDuration"][0]);
             TimeSpan lockoutTimeWindow = TimeSpan.FromTicks((long)result.Properties["lockoutObservationWindow"][0]);
 
-            Console.WriteLine($"\tMin Password Age: {Math.Abs(minPwdAge.TotalDays)}");
-            Console.WriteLine($"\tMax Password Age: {Math.Abs(maxPwdAge.TotalDays)}");
-            Console.WriteLine($"\tMin Password Length: {result.Properties["minPwdLength"][0]}");
-            Console.WriteLine($"\tPassword Properties: {result.Properties["pwdProperties"][0]}");
-            Console.WriteLine($"\tLockout Duration: {Math.Abs(lockoutDuration.TotalMinutes)} minutes");
-            Console.WriteLine($"\tLockout Time Window: Resets in {Math.Abs(lockoutTimeWindow.TotalMinutes)} minutes");
-            Console.WriteLine($"\tLockout Threshold: {result.Properties["lockoutThreshold"][0]} invalid attempts");
-            Console.WriteLine($"\tPassword History Length: {result.Properties["PwdHistoryLength"][0]}");
-
             this.MinPwdAge = Math.Abs(minPwdAge.TotalDays);
             this.MaxPwdAge = Math.Abs(maxPwdAge.TotalDays);
             this.MinPasswordLength = (int)result.Properties["minPwdLength"][0];

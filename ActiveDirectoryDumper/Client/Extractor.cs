@@ -2,6 +2,7 @@
 using DSInternals.Replication;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Linq;
@@ -53,14 +54,7 @@ namespace ActiveDirectoryDumper.Client
 
             DirectoryReplicationClient replicator = new DirectoryReplicationClient(dc.ToString(), RpcProtocol.TCP);
 
-            var accounts = replicator.GetAccounts(contextString, (c, processed, total) =>
-                Console.WriteLine($"[+] Progress: {processed}/{total}")
-            );
-
-            if (verbose)
-            {
-                accounts = replicator.GetAccounts(contextString);
-            }
+            var accounts = replicator.GetAccounts(contextString);
 
             List<User> users = new List<User>(customer.Users);
             List<Computer> computers = new List<Computer>(customer.Computers);
