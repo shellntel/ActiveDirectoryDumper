@@ -1,0 +1,78 @@
+ActiveDirectoryDumper Source-Available License
+Version 1.0, October 2026
+
+Copyright (c) 2025-2026 SynerComm, Inc.
+
+1. Purpose
+
+   This license lets anyone use, study, modify, build and share this software
+   for security auditing, assessment and penetration testing work, including
+   paid professional services engagements, while prohibiting the sale of the
+   software and its inclusion in commercial products or services.
+
+2. Permissions
+
+   Subject to the conditions and limitations below, the licensor grants you a
+   worldwide, royalty-free, non-exclusive, non-transferable license to:
+
+   a. use and run the software, including while delivering paid security
+      auditing, assessment or penetration testing services to your own
+      clients;
+   b. copy, modify and create derivative works of the software; and
+   c. build and distribute the software and your derivative works, in source
+      or binary form, at no charge.
+
+3. Conditions
+
+   a. Attribution. Every copy and derivative work you distribute must retain
+      this license, the copyright notice above, and a prominent notice of any
+      changes you made.
+   b. Same license. You may distribute derivative works only under this
+      license.
+   c. Authorized use. You may run the software only against systems you own
+      or are explicitly authorized to assess.
+
+4. Limitations
+
+   a. No sale. You may not sell, rent, lease, license for a fee, or otherwise
+      charge for the software or any derivative work, whether on its own or
+      bundled with anything else.
+   b. No commercial products or services. You may not incorporate the
+      software or any derivative work, in whole or in part, into any product,
+      platform, appliance, hosted service or managed service that is sold,
+      licensed, subscribed to, or otherwise offered for a fee or for profit.
+      For clarity: using the software as a tool while delivering a security
+      engagement is permitted under section 2(a); shipping the software or its
+      code inside something you sell or charge for is not.
+   c. No trademark rights. This license grants no rights to the names, marks
+      or logos of the licensor.
+
+5. Termination
+
+   Your rights under this license end automatically if you violate it. They
+   are reinstated if you fully cure the violation within 30 days of becoming
+   aware of it, unless the licensor notifies you in writing that they are not.
+
+6. No warranty
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+
+7. No liability
+
+   IN NO EVENT SHALL THE LICENSOR OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+   USE OR OTHER DEALINGS IN THE SOFTWARE, INCLUDING ANY USE THAT VIOLATES
+   SECTION 3(c).
+
+8. Definitions
+
+   "Software" means ActiveDirectoryDumper, its source code, binaries and
+   documentation as distributed by the licensor.
+   "Derivative work" means any work based on or incorporating any part of the
+   software.
+   "Licensor" means SynerComm, Inc.
+   "You" means the individual or organization exercising rights under this
+   license.

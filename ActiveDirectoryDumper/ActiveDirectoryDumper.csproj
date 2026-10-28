@@ -166,9 +166,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Client\Computer.cs" />
+    <Compile Include="Client\CollectionReport.cs" />
+    <Compile Include="Client\AccessControlAudit.cs" />
+    <Compile Include="Client\GppPassword.cs" />
     <Compile Include="Client\Customer.cs" />
     <Compile Include="Client\Extractor.cs" />
     <Compile Include="Client\Group.cs" />
+    <Compile Include="Client\EffectivePasswordPolicy.cs" />
+    <Compile Include="Client\GpoLink.cs" />
+    <Compile Include="Client\GroupPolicyObject.cs" />
+    <Compile Include="Client\PolicySetting.cs" />
+    <Compile Include="Client\SecurityPosture.cs" />
+    <Compile Include="Client\StoredCredentials.cs" />
+    <Compile Include="Client\PasswordSettingsObject.cs" />
+    <Compile Include="Client\ReversibleEncryptionStatus.cs" />
+    <Compile Include="Client\ReversibleEncryptionSummary.cs" />
     <Compile Include="Client\User.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

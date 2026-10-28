@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build ADD (Release x64)",
+            "type": "shell",
+            "command": "${workspaceFolder}\\build.cmd",
+            "args": ["Release", "x64"],
+            "windows": { "options": { "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] } } },
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": "$msCompile",
+            "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+        },
+        {
+            "label": "Build ADD (Debug x64)",
+            "type": "shell",
+            "command": "${workspaceFolder}\\build.cmd",
+            "args": ["Debug", "x64"],
+            "windows": { "options": { "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] } } },
+            "group": "build",
+            "problemMatcher": "$msCompile",
+            "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+        },
+        {
+            "label": "Clean ADD",
+            "type": "shell",
+            "command": "for /d %d in (ActiveDirectoryDumper\\bin ActiveDirectoryDumper\\obj) do if exist %d rmdir /s /q %d",
+            "windows": { "options": { "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] } } },
+            "problemMatcher": []
+        }
+    ]
+}

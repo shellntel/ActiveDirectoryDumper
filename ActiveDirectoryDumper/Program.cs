@@ -53,12 +53,24 @@ namespace ActiveDirectoryDumper
 
                     Console.WriteLine("[+] Performing hash collection");
                     Extractor extractor = new Extractor();
-                    extractor.Extract(o.Verbose, outputDir, customer);
+                    try
+                    {
+                        extractor.Extract(o.Verbose, outputDir, customer);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Keep the enumeration data and still produce a report if the hash dump fails.
+                        Console.WriteLine($"[!] Hash collection failed: {ex.Message}");
+                        customer.Report.Record("Hash collection (NTDS)", "FAILED", null, ex.Message);
+                    }
 
+                    customer.Analyze();
 
+                    customer.GenerateReport(outputDir);
                     customer.GenerateFiles(outputDir);
                     Console.WriteLine("[+] Generating zip file");
-                    GenerateZip.Create(outputDir);
+                    String zipBaseName = GenerateZip.BuildName(customer.Name, DateTime.Now);
+                    GenerateZip.Create(outputDir, zipBaseName);
                 }
                 else
                 {

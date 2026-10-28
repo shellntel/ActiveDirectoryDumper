@@ -1,8 +1,11 @@
-﻿namespace ActiveDirectoryDumper.Client
+using System;
+
+namespace ActiveDirectoryDumper.Client
 {
     public class User
     {
         public string Cn { get; private set; }
+        public string DistinguishedName { get; private set; }
         public string Name { get; private set; }
         public string First { get; private set; }
         public string Last { get; private set; }
@@ -32,7 +35,7 @@
             get => _historicalNTLMHashes;
             set => _historicalNTLMHashes = value;
         }
-        private string _logonName; 
+        private string _logonName;
         public string LogonName
         {
             get => _logonName;
@@ -43,8 +46,50 @@
         public string supportedEncryptionTypes { get; private set; }
         public string[] allowedToDelegateTo {  get; private set; }
 
+        // ---- Added for the 2.4 password-security analysis. Timestamps are ISO 8601 UTC. ----
+
+        /// <summary>Replicated last logon (lastLogonTimestamp, accurate to about 14 days). lastLogon above is per-DC and unreliable.</summary>
+        public string LastLogonTimestamp { get; set; } = String.Empty;
+
+        /// <summary>pwdLastSet with full precision; PwdLastSet above is a date only.</summary>
+        public string PwdLastSetUtc { get; set; } = String.Empty;
+
+        /// <summary>accountExpires, "Never", or empty.</summary>
+        public string AccountExpires { get; set; } = String.Empty;
+
+        /// <summary>msDS-UserPasswordExpiryTimeComputed: when the current password expires under the effective policy, "Never", or "Expired".</summary>
+        public string PasswordExpiryTime { get; set; } = String.Empty;
+
+        /// <summary>Flags from msDS-User-Account-Control-Computed (ACCOUNT_LOCKED, PASSWORD_EXPIRED, ...), the DC's live view.</summary>
+        public string[] UserAccountControlComputed { get; set; } = Array.Empty<string>();
+        public bool LockedOut { get; set; }
+        public bool PasswordExpired { get; set; }
+
+        /// <summary>Free-text fields that often hold passwords, alongside Description.</summary>
+        public string Info { get; set; } = String.Empty;
+        public string Comment { get; set; } = String.Empty;
+
+        /// <summary>Names of legacy password attributes present on the object (userPassword, unixUserPassword, msSFU30Password). Values are not collected.</summary>
+        public string[] LegacyPasswordAttributes { get; set; } = Array.Empty<string>();
+
+        /// <summary>Privileged groups the account belongs to, including through nested groups and primary group.</summary>
+        public string[] PrivilegedGroups { get; set; } = Array.Empty<string>();
+        public bool IsPrivileged { get; set; }
+        public bool IsProtectedUser { get; set; }
+
+        /// <summary>True for the krbtgt account and RODC krbtgt_* accounts.</summary>
+        public bool IsKrbtgt { get; set; }
+
+        /// <summary>Relative identifier from objectSid; 500 is the built-in Administrator, 501 Guest, 502 krbtgt.</summary>
+        public int Rid { get; set; }
+
+        public EffectivePasswordPolicy EffectivePasswordPolicy { get; set; } = new EffectivePasswordPolicy();
+        public StoredCredentials StoredCredentials { get; set; } = new StoredCredentials();
+        public ReversibleEncryptionStatus ReversibleEncryption { get; set; } = new ReversibleEncryptionStatus();
+
         public User(
             string cn,
+            string distinguishedName,
             string name,
             string first,
             string last,
@@ -69,6 +114,7 @@
         )
         {
             this.Cn = cn;
+            this.DistinguishedName = distinguishedName;
             this.Name = name;
             this.First = first;
             this.Last = last;
